@@ -1,0 +1,64 @@
+﻿# Dart / Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# Flutter generated files
+GeneratedPluginRegistrant.*
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+*.jks
+*.keystore
+key.properties
+
+# iOS / macOS - reserved if added later
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+macos/Pods/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# VS Code local settings exception
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Local database / backup
+*.db
+*.sqlite
+*.sqlite3
+*.backup
+*.bak
+
+# Exported app data
+exports/
+backups/
+
+# Temporary files
+tmp/
+temp/
