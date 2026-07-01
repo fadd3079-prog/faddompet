@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_radius.dart';
+import '../../app/theme/app_shadows.dart';
+import '../../app/theme/app_spacing.dart';
+
 class MoneyCard extends StatelessWidget {
   const MoneyCard({
     super.key,
@@ -18,50 +23,43 @@ class MoneyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final brightness = theme.colorScheme.brightness;
+    final isDark = brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withValues(alpha: 0.08),
+          color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
         ),
+        boxShadow: AppShadows.soft(brightness),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: accentColor.withValues(alpha: 0.12),
-            foregroundColor: accentColor,
-            child: Icon(icon, size: 20),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: isDark ? 0.18 : 0.11),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Icon(icon, size: 20, color: accentColor),
           ),
           const Spacer(),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
+          Text(title, style: theme.textTheme.labelMedium),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 22,
+            style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w900,
-              letterSpacing: -0.6,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            caption,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(caption, style: theme.textTheme.labelSmall),
         ],
       ),
     );

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/app_colors.dart';
+import '../../app/theme/app_radius.dart';
+import '../../app/theme/app_shadows.dart';
+import '../../app/theme/app_spacing.dart';
 import '../../features/analytics/analytics_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/transactions/transactions_page.dart';
 import '../../features/wallets/wallets_page.dart';
+import '../widgets/premium_bottom_nav.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -28,99 +32,201 @@ class _MainShellState extends State<MainShell> {
   void _showQuickAddSheet() {
     showModalBottomSheet<void>(
       context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
+      useSafeArea: true,
+      barrierColor: Colors.black.withValues(alpha: 0.38),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Tambah Transaksi',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Nanti bagian ini menjadi form cepat untuk pemasukan, pengeluaran, dan transfer antar-wallet.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.south_west_rounded),
-                      label: const Text('Pengeluaran'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.tonalIcon(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.north_east_rounded),
-                      label: const Text('Pemasukan'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
+        return const _QuickAddSheet();
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final navItems = const [
+      PremiumBottomNavItem(
+        icon: Icons.home_outlined,
+        selectedIcon: Icons.home_rounded,
+        label: 'Beranda',
+      ),
+      PremiumBottomNavItem(
+        icon: Icons.receipt_long_outlined,
+        selectedIcon: Icons.receipt_long_rounded,
+        label: 'Transaksi',
+      ),
+      PremiumBottomNavItem(
+        icon: Icons.donut_large_outlined,
+        selectedIcon: Icons.donut_large_rounded,
+        label: 'Analitik',
+      ),
+      PremiumBottomNavItem(
+        icon: Icons.account_balance_wallet_outlined,
+        selectedIcon: Icons.account_balance_wallet_rounded,
+        label: 'Wallet',
+      ),
+      PremiumBottomNavItem(
+        icon: Icons.settings_outlined,
+        selectedIcon: Icons.settings_rounded,
+        label: 'Setting',
+      ),
+    ];
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth > AppSpacing.webMaxWidth
+              ? AppSpacing.webMaxWidth
+              : constraints.maxWidth;
+
+          return Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: width,
+              height: constraints.maxHeight,
+              child: IndexedStack(index: _currentIndex, children: _pages),
+            ),
+          );
+        },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showQuickAddSheet,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah'),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
+      bottomNavigationBar: PremiumBottomNav(
+        currentIndex: _currentIndex,
+        items: navItems,
+        onAddPressed: _showQuickAddSheet,
+        onChanged: (index) {
           setState(() => _currentIndex = index);
         },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.space_dashboard_outlined),
-            selectedIcon: Icon(Icons.space_dashboard_rounded),
-            label: 'Beranda',
+      ),
+    );
+  }
+}
+
+class _QuickAddSheet extends StatelessWidget {
+  const _QuickAddSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: AppSpacing.webMaxWidth),
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: AppSpacing.screen,
+            right: AppSpacing.screen,
+            bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xxl,
           ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long_rounded),
-            label: 'Transaksi',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Tambah transaksi', style: theme.textTheme.headlineSmall),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Pilih jenis transaksi. Form cepat akan dibuat di fase berikutnya.',
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              _QuickAddOption(
+                icon: Icons.south_west_rounded,
+                title: 'Pengeluaran',
+                subtitle: 'Catat uang keluar',
+                accentColor: AppColors.expenseRed,
+                onTap: () => Navigator.pop(context),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _QuickAddOption(
+                icon: Icons.north_east_rounded,
+                title: 'Pemasukan',
+                subtitle: 'Catat uang masuk',
+                accentColor: AppColors.incomeGreen,
+                onTap: () => Navigator.pop(context),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _QuickAddOption(
+                icon: Icons.swap_horiz_rounded,
+                title: 'Transfer wallet',
+                subtitle: 'Pindahkan saldo antar-wallet',
+                accentColor: AppColors.infoBlue,
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.donut_large_outlined),
-            selectedIcon: Icon(Icons.donut_large_rounded),
-            label: 'Analitik',
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickAddOption extends StatelessWidget {
+  const _QuickAddOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.accentColor,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color accentColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final brightness = theme.colorScheme.brightness;
+    final isDark = brightness == Brightness.dark;
+
+    return Semantics(
+      button: true,
+      label: title,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.darkBorderSubtle
+                  : AppColors.borderSubtle,
+            ),
+            boxShadow: AppShadows.soft(brightness),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon: Icon(Icons.account_balance_wallet_rounded),
-            label: 'Wallet',
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: isDark ? 0.18 : 0.11),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: Icon(icon, color: accentColor, size: 22),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(subtitle, style: theme.textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings_rounded),
-            label: 'Setting',
-          ),
-        ],
+        ),
       ),
     );
   }
