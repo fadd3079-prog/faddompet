@@ -12,7 +12,12 @@ class WalletsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final wallets = [
       ('Tunai', 'Rp0', Icons.payments_rounded, AppColors.incomeGreen),
-      ('DANA', 'Rp0', Icons.account_balance_wallet_rounded, AppColors.infoBlue),
+      (
+        'E-Wallet',
+        'Rp0',
+        Icons.account_balance_wallet_rounded,
+        AppColors.infoBlue,
+      ),
       ('Rekening', 'Rp0', Icons.account_balance_rounded, AppColors.primary),
     ];
     final theme = Theme.of(context);

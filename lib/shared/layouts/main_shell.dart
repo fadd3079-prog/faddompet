@@ -9,6 +9,7 @@ import '../../features/dashboard/dashboard_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/transactions/transactions_page.dart';
 import '../../features/wallets/wallets_page.dart';
+import '../components/add_transaction_sheet.dart';
 import '../widgets/premium_bottom_nav.dart';
 
 class MainShell extends StatefulWidget {
@@ -34,9 +35,11 @@ class _MainShellState extends State<MainShell> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
       barrierColor: AppColors.scrim,
       builder: (context) {
-        return const _QuickAddSheet();
+        return const AddTransactionSheet();
       },
     );
   }
@@ -138,138 +141,6 @@ class _MainShellState extends State<MainShell> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _QuickAddSheet extends StatelessWidget {
-  const _QuickAddSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppSpacing.webMaxWidth),
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: AppSpacing.screen,
-            right: AppSpacing.screen,
-            bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xxl,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Tambah Transaksi', style: theme.textTheme.headlineSmall),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Pilih jenis transaksi yang ingin dicatat.',
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              _QuickAddOption(
-                icon: Icons.south_west_rounded,
-                title: 'Pengeluaran',
-                subtitle: 'Catat uang keluar',
-                accentColor: AppColors.expenseRed,
-                onTap: () => Navigator.pop(context),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _QuickAddOption(
-                icon: Icons.north_east_rounded,
-                title: 'Pemasukan',
-                subtitle: 'Catat uang masuk',
-                accentColor: AppColors.incomeGreen,
-                onTap: () => Navigator.pop(context),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _QuickAddOption(
-                icon: Icons.swap_horiz_rounded,
-                title: 'Transfer antar dompet',
-                subtitle: 'Pindahkan saldo dari satu dompet ke dompet lain',
-                accentColor: AppColors.infoBlue,
-                onTap: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickAddOption extends StatelessWidget {
-  const _QuickAddOption({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.accentColor,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color accentColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final brightness = theme.colorScheme.brightness;
-    final isDark = brightness == Brightness.dark;
-
-    return Semantics(
-      button: true,
-      label: title,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.darkBorderSubtle
-                  : AppColors.borderSubtle,
-            ),
-            boxShadow: AppShadows.soft(brightness),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: AppSpacing.iconTile,
-                height: AppSpacing.iconTile,
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: isDark ? 0.18 : 0.11),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-                child: Icon(icon, color: accentColor, size: 22),
-              ),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: theme.textTheme.titleMedium),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(subtitle, style: theme.textTheme.bodyMedium),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
