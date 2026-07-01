@@ -15,6 +15,16 @@ class AppShadows {
     ];
   }
 
+  static List<BoxShadow> subtle(Brightness brightness) {
+    final color = brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: 0.22)
+        : const Color(0xFF0F172A).withValues(alpha: 0.045);
+
+    return [
+      BoxShadow(color: color, blurRadius: 18, offset: const Offset(0, 8)),
+    ];
+  }
+
   static List<BoxShadow> hero(Brightness brightness) {
     final color = brightness == Brightness.dark
         ? Colors.black.withValues(alpha: 0.36)
@@ -32,6 +42,16 @@ class AppShadows {
 
     return [
       BoxShadow(color: color, blurRadius: 30, offset: const Offset(0, 16)),
+    ];
+  }
+
+  static List<BoxShadow> frame(Brightness brightness) {
+    final color = brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: 0.44)
+        : const Color(0xFF0F172A).withValues(alpha: 0.14);
+
+    return [
+      BoxShadow(color: color, blurRadius: 44, offset: const Offset(0, 22)),
     ];
   }
 }

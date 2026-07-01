@@ -41,8 +41,8 @@ class MoneyCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: AppSpacing.iconTileSmall,
+            height: AppSpacing.iconTileSmall,
             decoration: BoxDecoration(
               color: accentColor.withValues(alpha: isDark ? 0.18 : 0.11),
               borderRadius: BorderRadius.circular(AppRadius.lg),

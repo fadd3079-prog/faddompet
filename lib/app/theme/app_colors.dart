@@ -10,10 +10,17 @@ class AppColors {
   static const Color surfaceSoft = Color(0xFFF1F3F5);
   static const Color surfaceMint = Color(0xFFE8F7F4);
   static const Color borderSubtle = Color(0xFFE3E8E6);
+  static const Color frameBorder = Color(0xFFDCE5E2);
 
   static const Color textPrimary = Color(0xFF111827);
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color textTertiary = Color(0xFF9CA3AF);
+  static const Color onDark = Color(0xFFFFFFFF);
+  static const Color onDarkMuted = Color(0xB3FFFFFF);
+  static const Color onDarkFaint = Color(0x99FFFFFF);
+  static const Color onDarkSubtle = Color(0x1FFFFFFF);
+  static const Color onDarkBorder = Color(0x24FFFFFF);
+  static const Color scrim = Color(0x61000000);
 
   static const Color primary = Color(0xFF0F766E);
   static const Color primaryDark = Color(0xFF134E4A);
@@ -36,6 +43,7 @@ class AppColors {
   static const Color darkSurfaceElevated = Color(0xFF17202B);
   static const Color darkSurfaceSoft = Color(0xFF1F2937);
   static const Color darkBorderSubtle = Color(0xFF263241);
+  static const Color darkFrameBorder = Color(0xFF22303D);
   static const Color darkTextPrimary = Color(0xFFF9FAFB);
   static const Color darkTextSecondary = Color(0xFFB6BEC8);
   static const Color darkTextTertiary = Color(0xFF7D8794);

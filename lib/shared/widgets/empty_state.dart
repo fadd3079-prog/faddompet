@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
+import '../../app/theme/app_shadows.dart';
 import '../../app/theme/app_spacing.dart';
 
 class EmptyState extends StatelessWidget {
@@ -25,10 +26,23 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.colorScheme.brightness == Brightness.dark;
+    final brightness = theme.colorScheme.brightness;
+    final isDark = brightness == Brightness.dark;
     final content = Container(
-      constraints: const BoxConstraints(maxWidth: 360),
+      constraints: const BoxConstraints(maxWidth: AppSpacing.webMaxWidth),
       padding: EdgeInsets.all(compact ? AppSpacing.xl : AppSpacing.xxl),
+      decoration: compact
+          ? null
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.xxl),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.darkBorderSubtle
+                    : AppColors.borderSubtle,
+              ),
+              boxShadow: AppShadows.subtle(brightness),
+            ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -94,7 +108,7 @@ class EmptyState extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screen),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
         child: content,
       ),
     );

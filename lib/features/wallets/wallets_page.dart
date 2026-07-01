@@ -11,7 +11,7 @@ class WalletsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final wallets = [
-      ('Cash', 'Rp0', Icons.payments_rounded, AppColors.incomeGreen),
+      ('Tunai', 'Rp0', Icons.payments_rounded, AppColors.incomeGreen),
       ('DANA', 'Rp0', Icons.account_balance_wallet_rounded, AppColors.infoBlue),
       ('Rekening', 'Rp0', Icons.account_balance_rounded, AppColors.primary),
     ];
@@ -24,13 +24,13 @@ class WalletsPage extends StatelessWidget {
           AppSpacing.screen,
           AppSpacing.xl,
           AppSpacing.screen,
-          AppSpacing.xxl,
+          AppSpacing.contentBottomInset,
         ),
         children: [
-          Text('Wallet', style: theme.textTheme.displayMedium),
+          Text('Dompet', style: theme.textTheme.displayMedium),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Kelola saldo cash, e-wallet, rekening, dan tabungan.',
+            'Kelola tempat penyimpanan uang seperti tunai, e-wallet, rekening, dan tabungan.',
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: AppSpacing.xxl),
@@ -83,8 +83,8 @@ class _WalletCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: AppSpacing.iconTile + AppSpacing.xxs,
+            height: AppSpacing.iconTile + AppSpacing.xxs,
             decoration: BoxDecoration(
               color: accentColor.withValues(alpha: isDark ? 0.18 : 0.11),
               borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -98,7 +98,7 @@ class _WalletCard extends StatelessWidget {
               children: [
                 Text(name, style: theme.textTheme.titleMedium),
                 const SizedBox(height: AppSpacing.xs),
-                Text('Saldo saat ini', style: theme.textTheme.labelSmall),
+                Text('Saldo tercatat', style: theme.textTheme.labelSmall),
               ],
             ),
           ),

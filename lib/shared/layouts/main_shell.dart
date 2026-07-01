@@ -34,7 +34,7 @@ class _MainShellState extends State<MainShell> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      barrierColor: Colors.black.withValues(alpha: 0.38),
+      barrierColor: AppColors.scrim,
       builder: (context) {
         return const _QuickAddSheet();
       },
@@ -62,38 +62,81 @@ class _MainShellState extends State<MainShell> {
       PremiumBottomNavItem(
         icon: Icons.account_balance_wallet_outlined,
         selectedIcon: Icons.account_balance_wallet_rounded,
-        label: 'Wallet',
+        label: 'Dompet',
       ),
       PremiumBottomNavItem(
         icon: Icons.settings_outlined,
         selectedIcon: Icons.settings_rounded,
-        label: 'Setting',
+        label: 'Pengaturan',
       ),
     ];
 
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final width = constraints.maxWidth > AppSpacing.webMaxWidth
+          final theme = Theme.of(context);
+          final brightness = theme.colorScheme.brightness;
+          final isDark = brightness == Brightness.dark;
+          final showFrame =
+              constraints.maxWidth > AppSpacing.webMaxWidth + AppSpacing.huge;
+          final frameWidth = showFrame
               ? AppSpacing.webMaxWidth
               : constraints.maxWidth;
+          final frameHeight = showFrame
+              ? constraints.maxHeight - (AppSpacing.webFrameMargin * 2)
+              : constraints.maxHeight;
 
-          return Align(
-            alignment: Alignment.topCenter,
-            child: SizedBox(
-              width: width,
-              height: constraints.maxHeight,
-              child: IndexedStack(index: _currentIndex, children: _pages),
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkBackgroundSoft
+                  : AppColors.backgroundSoft,
+            ),
+            child: Center(
+              child: Container(
+                width: frameWidth,
+                height: frameHeight,
+                decoration: BoxDecoration(
+                  color: theme.scaffoldBackgroundColor,
+                  borderRadius: showFrame
+                      ? BorderRadius.circular(AppRadius.frame)
+                      : BorderRadius.zero,
+                  border: showFrame
+                      ? Border.all(
+                          color: isDark
+                              ? AppColors.darkFrameBorder
+                              : AppColors.frameBorder,
+                        )
+                      : null,
+                  boxShadow: showFrame ? AppShadows.frame(brightness) : null,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: IndexedStack(
+                        index: _currentIndex,
+                        children: _pages,
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: PremiumBottomNav(
+                        currentIndex: _currentIndex,
+                        items: navItems,
+                        onAddPressed: _showQuickAddSheet,
+                        onChanged: (index) {
+                          setState(() => _currentIndex = index);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
-        },
-      ),
-      bottomNavigationBar: PremiumBottomNav(
-        currentIndex: _currentIndex,
-        items: navItems,
-        onAddPressed: _showQuickAddSheet,
-        onChanged: (index) {
-          setState(() => _currentIndex = index);
         },
       ),
     );
@@ -121,10 +164,10 @@ class _QuickAddSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tambah transaksi', style: theme.textTheme.headlineSmall),
+              Text('Tambah Transaksi', style: theme.textTheme.headlineSmall),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Pilih jenis transaksi. Form cepat akan dibuat di fase berikutnya.',
+                'Pilih jenis transaksi yang ingin dicatat.',
                 style: theme.textTheme.bodyMedium,
               ),
               const SizedBox(height: AppSpacing.xl),
@@ -146,8 +189,8 @@ class _QuickAddSheet extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               _QuickAddOption(
                 icon: Icons.swap_horiz_rounded,
-                title: 'Transfer wallet',
-                subtitle: 'Pindahkan saldo antar-wallet',
+                title: 'Transfer antar dompet',
+                subtitle: 'Pindahkan saldo dari satu dompet ke dompet lain',
                 accentColor: AppColors.infoBlue,
                 onTap: () => Navigator.pop(context),
               ),
@@ -201,8 +244,8 @@ class _QuickAddOption extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: AppSpacing.iconTile,
+                height: AppSpacing.iconTile,
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: isDark ? 0.18 : 0.11),
                   borderRadius: BorderRadius.circular(AppRadius.lg),

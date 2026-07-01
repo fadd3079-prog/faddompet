@@ -32,8 +32,8 @@ class InsightCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: AppSpacing.iconTile,
+            height: AppSpacing.iconTile,
             decoration: BoxDecoration(
               color: (isDark ? AppColors.softMint : AppColors.surfaceMint)
                   .withValues(alpha: isDark ? 0.18 : 1),

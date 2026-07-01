@@ -39,15 +39,15 @@ class PremiumBottomNav extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.only(bottom: AppSpacing.md),
+      minimum: const EdgeInsets.only(bottom: AppSpacing.navBottomInset),
       child: Align(
         alignment: Alignment.bottomCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppSpacing.webMaxWidth),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Container(
-              height: 78,
+              height: AppSpacing.navHeight,
               padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: isDark
@@ -135,28 +135,58 @@ class _NavItem extends StatelessWidget {
                 AnimatedContainer(
                   duration: AppDurations.normal,
                   curve: AppDurations.easeOut,
-                  width: 42,
-                  height: 30,
+                  width: AppSpacing.iconTileSmall,
+                  height: AppSpacing.iconTileSmall,
                   decoration: BoxDecoration(
                     color: selected
                         ? activeColor.withValues(alpha: isDark ? 0.16 : 0.12)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppRadius.full),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: selected
+                        ? Border.all(
+                            color: activeColor.withValues(
+                              alpha: isDark ? 0.18 : 0.14,
+                            ),
+                          )
+                        : null,
                   ),
-                  child: Icon(
-                    selected ? item.selectedIcon : item.icon,
-                    color: selected ? activeColor : inactiveColor,
-                    size: 20,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      AnimatedScale(
+                        scale: selected ? 1.04 : 1,
+                        duration: AppDurations.fast,
+                        curve: AppDurations.easeOut,
+                        child: Icon(
+                          selected ? item.selectedIcon : item.icon,
+                          color: selected ? activeColor : inactiveColor,
+                          size: AppSpacing.xl,
+                        ),
+                      ),
+                      if (selected)
+                        Positioned(
+                          bottom: AppSpacing.xs,
+                          child: Container(
+                            width: AppSpacing.sm,
+                            height: AppSpacing.xxs,
+                            decoration: BoxDecoration(
+                              color: activeColor,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.full,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   item.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: selected ? activeColor : inactiveColor,
-                    fontSize: 10,
                     height: 1,
                   ),
                 ),
@@ -181,33 +211,25 @@ class _QuickAddButton extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Tambah transaksi',
+      label: 'Tambah Transaksi',
       child: GestureDetector(
         onTap: onPressed,
         behavior: HitTestBehavior.opaque,
         child: Tooltip(
-          message: 'Tambah transaksi',
+          message: 'Tambah Transaksi',
           child: Container(
-            width: 54,
-            height: 54,
+            width: AppSpacing.iconTile + AppSpacing.sm,
+            height: AppSpacing.iconTile + AppSpacing.sm,
             margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             decoration: BoxDecoration(
               color: isDark ? AppColors.softMint : AppColors.primary,
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              boxShadow: [
-                BoxShadow(
-                  color: (isDark ? Colors.black : AppColors.primary).withValues(
-                    alpha: isDark ? 0.36 : 0.22,
-                  ),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
-                ),
-              ],
+              boxShadow: [...AppShadows.nav(theme.colorScheme.brightness)],
             ),
             child: Icon(
               Icons.add_rounded,
-              color: isDark ? AppColors.darkBackground : Colors.white,
-              size: 28,
+              color: isDark ? AppColors.darkBackground : AppColors.onDark,
+              size: AppSpacing.xxl,
             ),
           ),
         ),

@@ -44,8 +44,8 @@ class MoneyMetricCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 9,
-                height: 9,
+                width: AppSpacing.metricDot,
+                height: AppSpacing.metricDot,
                 decoration: BoxDecoration(
                   color: accentColor,
                   borderRadius: BorderRadius.circular(AppRadius.full),

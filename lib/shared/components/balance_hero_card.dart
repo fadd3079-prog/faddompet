@@ -31,12 +31,12 @@ class BalanceHeroCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.deepNavy,
-            AppColors.primaryDark,
             AppColors.primary,
+            AppColors.primaryDark,
+            AppColors.deepNavy,
           ],
         ),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: AppColors.onDarkBorder),
         boxShadow: AppShadows.hero(brightness),
       ),
       child: Column(
@@ -48,7 +48,7 @@ class BalanceHeroCard extends StatelessWidget {
                 child: Text(
                   'Total Saldo',
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: AppColors.onDarkMuted,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     height: 1.2,
@@ -57,18 +57,16 @@ class BalanceHeroCard extends StatelessWidget {
                 ),
               ),
               Container(
-                width: 40,
-                height: 40,
+                width: AppSpacing.iconTileSmall,
+                height: AppSpacing.iconTileSmall,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
+                  color: AppColors.onDarkSubtle,
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.14),
-                  ),
+                  border: Border.all(color: AppColors.onDarkBorder),
                 ),
                 child: const Icon(
                   Icons.visibility_off_rounded,
-                  color: Colors.white,
+                  color: AppColors.onDark,
                   size: 19,
                 ),
               ),
@@ -82,7 +80,7 @@ class BalanceHeroCard extends StatelessWidget {
               totalBalance,
               maxLines: 1,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.onDark,
                 fontSize: 42,
                 fontWeight: FontWeight.w900,
                 height: 1.05,
@@ -93,9 +91,9 @@ class BalanceHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Ringkasan uang pribadi kamu saat ini',
+            'Saldo dari semua dompet yang tercatat',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.68),
+              color: AppColors.onDarkMuted,
               fontSize: 13,
               fontWeight: FontWeight.w600,
               height: 1.3,
@@ -106,7 +104,7 @@ class BalanceHeroCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _HeroInfoTile(label: 'Wallet', value: walletInfo),
+                child: _HeroInfoTile(label: 'Dompet', value: walletInfo),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -134,9 +132,9 @@ class _HeroInfoTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.11),
+        color: AppColors.onDarkSubtle,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        border: Border.all(color: AppColors.onDarkBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,7 +144,7 @@ class _HeroInfoTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.60),
+              color: AppColors.onDarkFaint,
               fontSize: 11,
               fontWeight: FontWeight.w700,
               height: 1.2,
@@ -159,7 +157,7 @@ class _HeroInfoTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.onDark,
               fontSize: 14,
               fontWeight: FontWeight.w800,
               height: 1.2,

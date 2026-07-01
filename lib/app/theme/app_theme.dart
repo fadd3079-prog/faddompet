@@ -16,7 +16,7 @@ class AppTheme {
           brightness: Brightness.light,
         ).copyWith(
           primary: AppColors.primary,
-          onPrimary: Colors.white,
+          onPrimary: AppColors.onDark,
           secondary: AppColors.infoBlue,
           surface: AppColors.surface,
           surfaceContainerHighest: AppColors.surfaceSoft,
@@ -60,7 +60,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.onDark,
           minimumSize: const Size.fromHeight(50),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,

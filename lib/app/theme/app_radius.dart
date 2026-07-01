@@ -10,6 +10,7 @@ class AppRadius {
   static const double xl = 24;
   static const double xxl = 28;
   static const double hero = 32;
+  static const double frame = 36;
   static const double full = 999;
 
   static BorderRadius get button => BorderRadius.circular(lg);

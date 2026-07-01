@@ -10,14 +10,18 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      (Icons.dark_mode_rounded, 'Tampilan', 'System, terang, atau gelap'),
-      (Icons.backup_rounded, 'Backup Data', 'Export dan import data lokal'),
-      (Icons.lock_rounded, 'Keamanan', 'PIN dan biometric lock'),
       (
-        Icons.info_rounded,
-        'Tentang Faddompet',
-        'Aplikasi money management pribadi',
+        Icons.dark_mode_rounded,
+        'Tampilan',
+        'Ikuti perangkat, terang, atau gelap',
       ),
+      (
+        Icons.backup_rounded,
+        'Data & Backup',
+        'Simpan atau pulihkan data cadangan',
+      ),
+      (Icons.lock_rounded, 'Keamanan', 'PIN dan biometrik'),
+      (Icons.info_rounded, 'Tentang Faddompet', 'Informasi aplikasi dan versi'),
     ];
     final theme = Theme.of(context);
     final isDark = theme.colorScheme.brightness == Brightness.dark;
@@ -29,7 +33,7 @@ class SettingsPage extends StatelessWidget {
           AppSpacing.screen,
           AppSpacing.xl,
           AppSpacing.screen,
-          AppSpacing.xxl,
+          AppSpacing.contentBottomInset,
         ),
         children: [
           Text('Pengaturan', style: theme.textTheme.displayMedium),
@@ -51,8 +55,8 @@ class SettingsPage extends StatelessWidget {
                 ),
                 child: ListTile(
                   leading: Container(
-                    width: 42,
-                    height: 42,
+                    width: AppSpacing.iconTileSmall + AppSpacing.xxs,
+                    height: AppSpacing.iconTileSmall + AppSpacing.xxs,
                     decoration: BoxDecoration(
                       color: isDark
                           ? AppColors.softMint.withValues(alpha: 0.12)
