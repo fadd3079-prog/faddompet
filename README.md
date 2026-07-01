@@ -1,4 +1,4 @@
-# Faddompet
+﻿# Faddompet
 
 **Faddompet** is a simple, elegant, offline-first personal money management app for students, boarding house life, and freelance income tracking.
 
