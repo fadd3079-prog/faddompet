@@ -1,8 +1,8 @@
-# Faddompet
+# FadDompet 
 
-**Faddompet** is a simple, elegant, offline-first personal money management app for students, boarding house life, and freelance income tracking.
+**FadDompet** is a simple, elegant, offline-first personal money management app for students, boarding house life, and freelance income tracking.
 
-The name comes from **Fadd** and **Dompet**. It is designed as a personal finance app that runs locally on Android, with fast transaction input, clean analytics, and a minimal Apple-like interface.
+The name comes from **Fad** and **Dompet**. It is designed as a personal finance app that runs locally on Android, with fast transaction input, clean analytics, and a minimal Apple-like interface.
 
 ## Project Status
 
