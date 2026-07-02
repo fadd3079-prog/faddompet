@@ -23,7 +23,7 @@ class CategoryGroupSection extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
+          clipBehavior: Clip.hardEdge,
           child: Row(
             children: [
               for (var index = 0; index < children.length; index++) ...[

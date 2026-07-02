@@ -5,49 +5,49 @@ import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 
 class TransactionSearchBar extends StatelessWidget {
-  const TransactionSearchBar({super.key});
+  const TransactionSearchBar({
+    super.key,
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.colorScheme.brightness == Brightness.dark;
 
-    return Semantics(
-      textField: true,
-      label: 'Cari transaksi',
-      child: Container(
-        constraints: const BoxConstraints(
-          minHeight: AppSpacing.huge + AppSpacing.sm,
+    return Container(
+      constraints: const BoxConstraints(
+        minHeight: AppSpacing.huge + AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurfaceSoft : AppColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
         ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurfaceSoft : AppColors.surfaceSoft,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
+      ),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: 'Cari transaksi',
+          border: InputBorder.none,
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: AppSpacing.xl,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
           ),
         ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.search_rounded,
-              size: AppSpacing.xl,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Text(
-                'Cari transaksi',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium,
-              ),
-            ),
-          ],
-        ),
+        style: theme.textTheme.bodyMedium,
       ),
     );
   }

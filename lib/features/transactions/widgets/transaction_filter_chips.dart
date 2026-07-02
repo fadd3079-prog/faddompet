@@ -19,23 +19,34 @@ class TransactionFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      clipBehavior: Clip.none,
-      child: Row(
-        children: [
-          for (var index = 0; index < labels.length; index++) ...[
-            _FilterChipButton(
-              label: labels[index],
-              selected: selectedIndex == index,
-              accentColor: _accentForLabel(labels[index]),
-              onTap: () => onChanged(index),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SizedBox(
+          width: constraints.maxWidth,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.hardEdge,
+            child: Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.xs),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var index = 0; index < labels.length; index++) ...[
+                    _FilterChipButton(
+                      label: labels[index],
+                      selected: selectedIndex == index,
+                      accentColor: _accentForLabel(labels[index]),
+                      onTap: () => onChanged(index),
+                    ),
+                    if (index != labels.length - 1)
+                      const SizedBox(width: AppSpacing.sm),
+                  ],
+                ],
+              ),
             ),
-            if (index != labels.length - 1)
-              const SizedBox(width: AppSpacing.sm),
-          ],
-        ],
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -75,12 +86,12 @@ class _FilterChipButton extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: selected
-                ? accentColor.withValues(alpha: isDark ? 0.18 : 0.10)
+                ? accentColor.withValues(alpha: isDark ? 0.16 : 0.09)
                 : (isDark ? AppColors.darkSurfaceSoft : AppColors.surfaceSoft),
             borderRadius: BorderRadius.circular(AppRadius.full),
             border: Border.all(
               color: selected
-                  ? accentColor.withValues(alpha: isDark ? 0.38 : 0.22)
+                  ? accentColor.withValues(alpha: isDark ? 0.34 : 0.20)
                   : (isDark
                         ? AppColors.darkBorderSubtle
                         : AppColors.borderSubtle),

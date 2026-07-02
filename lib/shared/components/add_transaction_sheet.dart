@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/providers/app_providers.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_durations.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_shadows.dart';
 import '../../app/theme/app_spacing.dart';
+import '../../core/enums/transaction_type.dart';
+import '../../core/formatters/currency_formatter.dart';
+import '../../data/local/database/app_database.dart';
+import '../../data/repositories/app_models.dart';
 import 'amount_display.dart';
 import 'amount_keypad.dart';
 import 'category_choice_chip.dart';
@@ -13,52 +19,71 @@ import 'date_choice_chip.dart';
 import 'transaction_type_segmented_control.dart';
 import 'wallet_choice_chip.dart';
 
-enum _AddTransactionType { expense, income, transfer }
-
 enum _NoticeTone { info, warning }
 
-class AddTransactionSheet extends StatefulWidget {
-  const AddTransactionSheet({super.key});
+class AddTransactionSheet extends ConsumerStatefulWidget {
+  const AddTransactionSheet({super.key, this.transaction});
+
+  final TransactionDetail? transaction;
 
   @override
-  State<AddTransactionSheet> createState() => _AddTransactionSheetState();
+  ConsumerState<AddTransactionSheet> createState() =>
+      _AddTransactionSheetState();
 }
 
-class _AddTransactionSheetState extends State<AddTransactionSheet> {
+class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   final TextEditingController _noteController = TextEditingController();
 
-  _AddTransactionType _type = _AddTransactionType.expense;
+  TransactionType _type = TransactionType.expense;
   String _amountDigits = '';
-  String _expenseCategory = 'Makanan';
-  String _incomeCategory = 'Gaji';
-  String _selectedWallet = 'Tunai';
-  String _fromWallet = 'Tunai';
-  String _toWallet = 'E-Wallet';
-  String _selectedDate = 'Hari ini';
+  int? _selectedCategoryId;
+  int? _selectedWalletId;
+  int? _fromWalletId;
+  int? _toWalletId;
+  DateTime _selectedDate = DateTime.now();
+  String _dateLabel = 'Hari ini';
   String? _noticeMessage;
   _NoticeTone _noticeTone = _NoticeTone.info;
+  bool _saving = false;
 
   int get _amount => int.tryParse(_amountDigits) ?? 0;
 
   Color get _accentColor {
     switch (_type) {
-      case _AddTransactionType.expense:
+      case TransactionType.expense:
         return AppColors.expenseRed;
-      case _AddTransactionType.income:
+      case TransactionType.income:
         return AppColors.incomeGreen;
-      case _AddTransactionType.transfer:
+      case TransactionType.transfer:
         return AppColors.infoBlue;
     }
   }
 
   String get _amountHelper {
     switch (_type) {
-      case _AddTransactionType.expense:
+      case TransactionType.expense:
         return 'Uang keluar dari dompet pilihan.';
-      case _AddTransactionType.income:
+      case TransactionType.income:
         return 'Uang masuk ke dompet pilihan.';
-      case _AddTransactionType.transfer:
+      case TransactionType.transfer:
         return 'Pindahkan saldo tanpa dihitung sebagai pemasukan.';
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final transaction = widget.transaction;
+    if (transaction != null) {
+      _type = transaction.type;
+      _amountDigits = transaction.transaction.amount.toString();
+      _selectedCategoryId = transaction.transaction.categoryId;
+      _selectedWalletId = transaction.transaction.walletId;
+      _fromWalletId = transaction.transaction.walletId;
+      _toWalletId = transaction.transaction.transferWalletId;
+      _selectedDate = transaction.transaction.date;
+      _dateLabel = 'Pilih tanggal';
+      _noteController.text = transaction.transaction.note ?? '';
     }
   }
 
@@ -68,10 +93,13 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     super.dispose();
   }
 
-  void _selectType(int index) {
+  void _selectType(int index, List<CategoryEntry> categories) {
     setState(() {
-      _type = _AddTransactionType.values[index];
+      _type = TransactionType.values[index];
       _noticeMessage = null;
+      if (_type != TransactionType.transfer) {
+        _selectedCategoryId = _firstCategory(categories)?.id;
+      }
     });
   }
 
@@ -84,9 +112,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   }
 
   void _backspace() {
-    if (_amountDigits.isEmpty) {
-      return;
-    }
+    if (_amountDigits.isEmpty) return;
 
     setState(() {
       _amountDigits = _amountDigits.substring(0, _amountDigits.length - 1);
@@ -94,57 +120,132 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     });
   }
 
-  void _selectCategory(String label) {
+  Future<void> _selectDate(String label) async {
+    if (label == 'Pilih tanggal') {
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: _selectedDate,
+        firstDate: DateTime(2020),
+        lastDate: DateTime(2100),
+      );
+      if (picked == null) return;
+      setState(() {
+        _selectedDate = picked;
+        _dateLabel = label;
+        _noticeMessage = null;
+      });
+      return;
+    }
+
+    final now = DateTime.now();
     setState(() {
-      if (_type == _AddTransactionType.income) {
-        _incomeCategory = label;
-      } else {
-        _expenseCategory = label;
-      }
+      _selectedDate = label == 'Kemarin'
+          ? now.subtract(const Duration(days: 1))
+          : now;
+      _dateLabel = label;
       _noticeMessage = null;
     });
   }
 
-  void _selectFromWallet(String label) {
-    setState(() {
-      _fromWallet = label;
-      if (_toWallet == label) {
-        _toWallet = _walletOptions
-            .firstWhere((wallet) => wallet.label != label)
-            .label;
+  Future<void> _submit(List<WalletBalance> wallets) async {
+    if (_amount <= 0) {
+      _showNotice('Masukkan nominal terlebih dahulu.', _NoticeTone.warning);
+      return;
+    }
+
+    final walletId = _type == TransactionType.transfer
+        ? _fromWalletId
+        : _selectedWalletId;
+    if (walletId == null) {
+      _showNotice('Pilih dompet terlebih dahulu.', _NoticeTone.warning);
+      return;
+    }
+
+    if (_type != TransactionType.transfer && _selectedCategoryId == null) {
+      _showNotice('Pilih kategori terlebih dahulu.', _NoticeTone.warning);
+      return;
+    }
+
+    if (_type == TransactionType.transfer) {
+      if (_toWalletId == null) {
+        _showNotice(
+          'Pilih dompet tujuan terlebih dahulu.',
+          _NoticeTone.warning,
+        );
+        return;
       }
-    });
+      if (_toWalletId == walletId) {
+        _showNotice('Pilih dompet tujuan yang berbeda.', _NoticeTone.warning);
+        return;
+      }
+    }
+
+    setState(() => _saving = true);
+
+    try {
+      await ref
+          .read(transactionRepositoryProvider)
+          .save(
+            id: widget.transaction?.transaction.id,
+            type: _type,
+            amount: _amount,
+            categoryId: _selectedCategoryId,
+            walletId: walletId,
+            transferWalletId: _toWalletId,
+            date: _selectedDate,
+            note: _noteController.text,
+          );
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transaksi berhasil disimpan.')),
+      );
+    } on ArgumentError catch (error) {
+      _showNotice(error.message.toString(), _NoticeTone.warning);
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
   }
 
-  void _selectToWallet(String label) {
+  void _showNotice(String message, _NoticeTone tone) {
     setState(() {
-      _toWallet = label;
-      if (_fromWallet == label) {
-        _fromWallet = _walletOptions
-            .firstWhere((wallet) => wallet.label != label)
-            .label;
-      }
-    });
-  }
-
-  void _submit() {
-    setState(() {
-      if (_amount <= 0) {
-        _noticeTone = _NoticeTone.warning;
-        _noticeMessage = 'Masukkan nominal terlebih dahulu.';
-      } else {
-        _noticeTone = _NoticeTone.info;
-        _noticeMessage = 'Transaksi siap disimpan setelah data lokal aktif.';
-      }
+      _noticeMessage = message;
+      _noticeTone = tone;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final walletsAsync = ref.watch(walletBalancesProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
+
+    return walletsAsync.when(
+      data: (wallets) => categoriesAsync.when(
+        data: (categories) => _buildSheet(context, wallets, categories),
+        loading: () => const _SheetLoading(),
+        error: (_, _) =>
+            const _SheetLoading(message: 'Kategori belum bisa dimuat'),
+      ),
+      loading: () => const _SheetLoading(),
+      error: (_, _) => const _SheetLoading(message: 'Dompet belum bisa dimuat'),
+    );
+  }
+
+  Widget _buildSheet(
+    BuildContext context,
+    List<WalletBalance> wallets,
+    List<CategoryEntry> categories,
+  ) {
+    _ensureDefaults(wallets, categories);
+
     final theme = Theme.of(context);
     final brightness = theme.colorScheme.brightness;
     final isDark = brightness == Brightness.dark;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final visibleCategories = _visibleCategories(categories);
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -182,19 +283,18 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                         ),
                         children: [
                           TransactionTypeSegmentedControl(
-                            labels: const [
-                              'Pengeluaran',
-                              'Pemasukan',
-                              'Transfer',
-                            ],
+                            labels: TransactionType.values
+                                .map((type) => type.label)
+                                .toList(),
                             selectedIndex: _type.index,
                             accentColor: _accentColor,
-                            onChanged: _selectType,
+                            onChanged: (index) =>
+                                _selectType(index, categories),
                           ),
                           const SizedBox(height: AppSpacing.xl),
                           AmountDisplay(
                             label: 'Nominal',
-                            amount: _formatRupiah(_amount),
+                            amount: CurrencyFormatter.rupiah(_amount),
                             helper: _amountHelper,
                             accentColor: _accentColor,
                           ),
@@ -205,35 +305,54 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                             onBackspacePressed: _backspace,
                           ),
                           const SizedBox(height: AppSpacing.xxxl),
-                          if (_type == _AddTransactionType.transfer)
+                          if (_type == TransactionType.transfer)
                             _TransferFields(
-                              fromWallet: _fromWallet,
-                              toWallet: _toWallet,
-                              onFromSelected: _selectFromWallet,
-                              onToSelected: _selectToWallet,
+                              wallets: wallets,
+                              fromWalletId: _fromWalletId,
+                              toWalletId: _toWalletId,
+                              onFromSelected: (id) {
+                                setState(() {
+                                  _fromWalletId = id;
+                                  if (_toWalletId == id) {
+                                    _toWalletId = wallets
+                                        .map((item) => item.wallet.id)
+                                        .firstWhere((item) => item != id);
+                                  }
+                                  _noticeMessage = null;
+                                });
+                              },
+                              onToSelected: (id) {
+                                setState(() {
+                                  _toWalletId = id;
+                                  if (_fromWalletId == id) {
+                                    _fromWalletId = wallets
+                                        .map((item) => item.wallet.id)
+                                        .firstWhere((item) => item != id);
+                                  }
+                                  _noticeMessage = null;
+                                });
+                              },
                             )
                           else
                             _CategoryPicker(
-                              groups: _type == _AddTransactionType.expense
-                                  ? _expenseGroups
-                                  : _incomeGroups,
-                              frequent: _type == _AddTransactionType.expense
-                                  ? _expenseFrequent
-                                  : _incomeFrequent,
-                              selectedCategory:
-                                  _type == _AddTransactionType.expense
-                                  ? _expenseCategory
-                                  : _incomeCategory,
+                              categories: visibleCategories,
+                              selectedCategoryId: _selectedCategoryId,
                               fallbackAccent: _accentColor,
-                              onSelected: _selectCategory,
+                              onSelected: (category) {
+                                setState(() {
+                                  _selectedCategoryId = category.id;
+                                  _noticeMessage = null;
+                                });
+                              },
                             ),
-                          if (_type != _AddTransactionType.transfer) ...[
+                          if (_type != TransactionType.transfer) ...[
                             const SizedBox(height: AppSpacing.xxxl),
                             _WalletPicker(
-                              selectedWallet: _selectedWallet,
-                              onSelected: (label) {
+                              wallets: wallets,
+                              selectedWalletId: _selectedWalletId,
+                              onSelected: (id) {
                                 setState(() {
-                                  _selectedWallet = label;
+                                  _selectedWalletId = id;
                                   _noticeMessage = null;
                                 });
                               },
@@ -241,13 +360,8 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                           ],
                           const SizedBox(height: AppSpacing.xxxl),
                           _DatePicker(
-                            selectedDate: _selectedDate,
-                            onSelected: (label) {
-                              setState(() {
-                                _selectedDate = label;
-                                _noticeMessage = null;
-                              });
-                            },
+                            selectedDate: _dateLabel,
+                            onSelected: _selectDate,
                           ),
                           const SizedBox(height: AppSpacing.xxxl),
                           _NoteField(controller: _noteController),
@@ -257,7 +371,8 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                     _SheetFooter(
                       noticeMessage: _noticeMessage,
                       noticeTone: _noticeTone,
-                      onSubmit: _submit,
+                      saving: _saving,
+                      onSubmit: () => _submit(wallets),
                     ),
                   ],
                 ),
@@ -266,6 +381,43 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
           ),
         ),
       ),
+    );
+  }
+
+  void _ensureDefaults(
+    List<WalletBalance> wallets,
+    List<CategoryEntry> categories,
+  ) {
+    if (wallets.isNotEmpty) {
+      _selectedWalletId ??= wallets.first.wallet.id;
+      _fromWalletId ??= wallets.first.wallet.id;
+      if (wallets.length > 1) {
+        _toWalletId ??= wallets[1].wallet.id;
+      } else {
+        _toWalletId ??= wallets.first.wallet.id;
+      }
+    }
+
+    if (_type != TransactionType.transfer) {
+      _selectedCategoryId ??= _firstCategory(categories)?.id;
+    }
+  }
+
+  List<CategoryEntry> _visibleCategories(List<CategoryEntry> categories) {
+    return categories
+        .where(
+          (category) => category.type == _type.value || category.type == 'both',
+        )
+        .toList();
+  }
+
+  CategoryEntry? _firstCategory(List<CategoryEntry> categories) {
+    final visible = _visibleCategories(categories);
+    if (visible.isEmpty) return null;
+    final frequent = _frequentLabels(_type);
+    return visible.firstWhere(
+      (category) => frequent.contains(category.name),
+      orElse: () => visible.first,
     );
   }
 }
@@ -320,26 +472,22 @@ class _SheetHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
-              Semantics(
-                button: true,
-                label: 'Tutup',
-                child: GestureDetector(
-                  onTap: onClose,
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: AppSpacing.iconTileSmall,
-                    height: AppSpacing.iconTileSmall,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceSoft
-                          : AppColors.surfaceSoft,
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                    ),
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: AppSpacing.xl,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+              GestureDetector(
+                onTap: onClose,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: AppSpacing.iconTileSmall,
+                  height: AppSpacing.iconTileSmall,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurfaceSoft
+                        : AppColors.surfaceSoft,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: AppSpacing.xl,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -353,21 +501,34 @@ class _SheetHeader extends StatelessWidget {
 
 class _CategoryPicker extends StatelessWidget {
   const _CategoryPicker({
-    required this.groups,
-    required this.frequent,
-    required this.selectedCategory,
+    required this.categories,
+    required this.selectedCategoryId,
     required this.fallbackAccent,
     required this.onSelected,
   });
 
-  final List<_CategoryGroup> groups;
-  final List<_CategoryOption> frequent;
-  final String selectedCategory;
+  final List<CategoryEntry> categories;
+  final int? selectedCategoryId;
   final Color fallbackAccent;
-  final ValueChanged<String> onSelected;
+  final ValueChanged<CategoryEntry> onSelected;
 
   @override
   Widget build(BuildContext context) {
+    final frequent = [
+      for (final name in _frequentLabels(
+        categories.isNotEmpty &&
+                categories.first.type == TransactionType.income.value
+            ? TransactionType.income
+            : TransactionType.expense,
+      ))
+        if (categories.any((category) => category.name == name))
+          categories.firstWhere((category) => category.name == name),
+    ];
+    final grouped = <String, List<CategoryEntry>>{};
+    for (final category in categories) {
+      grouped.putIfAbsent(category.groupName, () => []).add(category);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -376,31 +537,32 @@ class _CategoryPicker extends StatelessWidget {
           subtitle: 'Mulai dari yang sering dipakai.',
         ),
         const SizedBox(height: AppSpacing.lg),
-        CategoryGroupSection(
-          title: 'Sering dipakai',
-          children: [
-            for (final item in frequent)
-              CategoryChoiceChip(
-                label: item.label,
-                icon: item.icon,
-                selected: selectedCategory == item.label,
-                accentColor: fallbackAccent,
-                onSelected: () => onSelected(item.label),
-              ),
-          ],
-        ),
-        for (final group in groups) ...[
+        if (frequent.isNotEmpty)
+          CategoryGroupSection(
+            title: 'Sering dipakai',
+            children: [
+              for (final item in frequent)
+                CategoryChoiceChip(
+                  label: item.name,
+                  icon: _categoryIcon(item.iconKey),
+                  selected: selectedCategoryId == item.id,
+                  accentColor: fallbackAccent,
+                  onSelected: () => onSelected(item),
+                ),
+            ],
+          ),
+        for (final entry in grouped.entries) ...[
           const SizedBox(height: AppSpacing.xl),
           CategoryGroupSection(
-            title: group.title,
+            title: entry.key,
             children: [
-              for (final item in group.items)
+              for (final item in entry.value)
                 CategoryChoiceChip(
-                  label: item.label,
-                  icon: item.icon,
-                  selected: selectedCategory == item.label,
-                  accentColor: group.accentColor,
-                  onSelected: () => onSelected(item.label),
+                  label: item.name,
+                  icon: _categoryIcon(item.iconKey),
+                  selected: selectedCategoryId == item.id,
+                  accentColor: Color(item.colorValue),
+                  onSelected: () => onSelected(item),
                 ),
             ],
           ),
@@ -411,10 +573,15 @@ class _CategoryPicker extends StatelessWidget {
 }
 
 class _WalletPicker extends StatelessWidget {
-  const _WalletPicker({required this.selectedWallet, required this.onSelected});
+  const _WalletPicker({
+    required this.wallets,
+    required this.selectedWalletId,
+    required this.onSelected,
+  });
 
-  final String selectedWallet;
-  final ValueChanged<String> onSelected;
+  final List<WalletBalance> wallets;
+  final int? selectedWalletId;
+  final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -426,7 +593,11 @@ class _WalletPicker extends StatelessWidget {
           subtitle: 'Saldo akan masuk atau keluar dari dompet ini.',
         ),
         const SizedBox(height: AppSpacing.lg),
-        _WalletChipRow(selectedWallet: selectedWallet, onSelected: onSelected),
+        _WalletChipRow(
+          wallets: wallets,
+          selectedWalletId: selectedWalletId,
+          onSelected: onSelected,
+        ),
       ],
     );
   }
@@ -434,16 +605,18 @@ class _WalletPicker extends StatelessWidget {
 
 class _TransferFields extends StatelessWidget {
   const _TransferFields({
-    required this.fromWallet,
-    required this.toWallet,
+    required this.wallets,
+    required this.fromWalletId,
+    required this.toWalletId,
     required this.onFromSelected,
     required this.onToSelected,
   });
 
-  final String fromWallet;
-  final String toWallet;
-  final ValueChanged<String> onFromSelected;
-  final ValueChanged<String> onToSelected;
+  final List<WalletBalance> wallets;
+  final int? fromWalletId;
+  final int? toWalletId;
+  final ValueChanged<int> onFromSelected;
+  final ValueChanged<int> onToSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -459,11 +632,19 @@ class _TransferFields extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         Text('Dari', style: theme.textTheme.labelLarge),
         const SizedBox(height: AppSpacing.md),
-        _WalletChipRow(selectedWallet: fromWallet, onSelected: onFromSelected),
+        _WalletChipRow(
+          wallets: wallets,
+          selectedWalletId: fromWalletId,
+          onSelected: onFromSelected,
+        ),
         const SizedBox(height: AppSpacing.xl),
         Text('Ke', style: theme.textTheme.labelLarge),
         const SizedBox(height: AppSpacing.md),
-        _WalletChipRow(selectedWallet: toWallet, onSelected: onToSelected),
+        _WalletChipRow(
+          wallets: wallets,
+          selectedWalletId: toWalletId,
+          onSelected: onToSelected,
+        ),
       ],
     );
   }
@@ -471,28 +652,30 @@ class _TransferFields extends StatelessWidget {
 
 class _WalletChipRow extends StatelessWidget {
   const _WalletChipRow({
-    required this.selectedWallet,
+    required this.wallets,
+    required this.selectedWalletId,
     required this.onSelected,
   });
 
-  final String selectedWallet;
-  final ValueChanged<String> onSelected;
+  final List<WalletBalance> wallets;
+  final int? selectedWalletId;
+  final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      clipBehavior: Clip.none,
+      clipBehavior: Clip.hardEdge,
       child: Row(
         children: [
-          for (var index = 0; index < _walletOptions.length; index++) ...[
+          for (var index = 0; index < wallets.length; index++) ...[
             WalletChoiceChip(
-              label: _walletOptions[index].label,
-              icon: _walletOptions[index].icon,
-              selected: selectedWallet == _walletOptions[index].label,
-              onSelected: () => onSelected(_walletOptions[index].label),
+              label: wallets[index].wallet.name,
+              icon: _walletIcon(wallets[index].wallet.type),
+              selected: selectedWalletId == wallets[index].wallet.id,
+              onSelected: () => onSelected(wallets[index].wallet.id),
             ),
-            if (index != _walletOptions.length - 1)
+            if (index != wallets.length - 1)
               const SizedBox(width: AppSpacing.sm),
           ],
         ],
@@ -509,6 +692,8 @@ class _DatePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const dateOptions = ['Hari ini', 'Kemarin', 'Pilih tanggal'];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -519,16 +704,16 @@ class _DatePicker extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
+          clipBehavior: Clip.hardEdge,
           child: Row(
             children: [
-              for (var index = 0; index < _dateOptions.length; index++) ...[
+              for (var index = 0; index < dateOptions.length; index++) ...[
                 DateChoiceChip(
-                  label: _dateOptions[index],
-                  selected: selectedDate == _dateOptions[index],
-                  onSelected: () => onSelected(_dateOptions[index]),
+                  label: dateOptions[index],
+                  selected: selectedDate == dateOptions[index],
+                  onSelected: () => onSelected(dateOptions[index]),
                 ),
-                if (index != _dateOptions.length - 1)
+                if (index != dateOptions.length - 1)
                   const SizedBox(width: AppSpacing.sm),
               ],
             ],
@@ -598,11 +783,13 @@ class _SheetFooter extends StatelessWidget {
   const _SheetFooter({
     required this.noticeMessage,
     required this.noticeTone,
+    required this.saving,
     required this.onSubmit,
   });
 
   final String? noticeMessage;
   final _NoticeTone noticeTone;
+  final bool saving;
   final VoidCallback onSubmit;
 
   @override
@@ -632,37 +819,33 @@ class _SheetFooter extends StatelessWidget {
             _InlineNotice(message: noticeMessage!, tone: noticeTone),
             const SizedBox(height: AppSpacing.md),
           ],
-          Semantics(
-            button: true,
-            label: 'Simpan Transaksi',
-            child: GestureDetector(
-              onTap: onSubmit,
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedContainer(
-                duration: AppDurations.normal,
-                curve: AppDurations.easeOut,
-                width: double.infinity,
-                constraints: const BoxConstraints(
-                  minHeight: AppSpacing.huge + AppSpacing.lg,
-                ),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.softMint : AppColors.primary,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (isDark ? AppColors.softMint : AppColors.primary)
-                          .withValues(alpha: isDark ? 0.18 : 0.14),
-                      blurRadius: AppSpacing.xxl,
-                      offset: const Offset(0, AppSpacing.md),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  'Simpan Transaksi',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: isDark ? AppColors.darkBackground : AppColors.onDark,
+          GestureDetector(
+            onTap: saving ? null : onSubmit,
+            behavior: HitTestBehavior.opaque,
+            child: AnimatedContainer(
+              duration: AppDurations.normal,
+              curve: AppDurations.easeOut,
+              width: double.infinity,
+              constraints: const BoxConstraints(
+                minHeight: AppSpacing.huge + AppSpacing.lg,
+              ),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.softMint : AppColors.primary,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDark ? AppColors.softMint : AppColors.primary)
+                        .withValues(alpha: isDark ? 0.18 : 0.14),
+                    blurRadius: AppSpacing.xxl,
+                    offset: const Offset(0, AppSpacing.md),
                   ),
+                ],
+              ),
+              child: Text(
+                saving ? 'Menyimpan...' : 'Simpan Transaksi',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: isDark ? AppColors.darkBackground : AppColors.onDark,
                 ),
               ),
             ),
@@ -725,219 +908,69 @@ class _SheetSectionTitle extends StatelessWidget {
   }
 }
 
-class _CategoryOption {
-  const _CategoryOption(this.label, {this.icon});
+class _SheetLoading extends StatelessWidget {
+  const _SheetLoading({this.message = 'Menyiapkan data lokal'});
 
-  final String label;
-  final IconData? icon;
-}
+  final String message;
 
-class _CategoryGroup {
-  const _CategoryGroup({
-    required this.title,
-    required this.accentColor,
-    required this.items,
-  });
-
-  final String title;
-  final Color accentColor;
-  final List<_CategoryOption> items;
-}
-
-class _WalletOption {
-  const _WalletOption(this.label, this.icon);
-
-  final String label;
-  final IconData icon;
-}
-
-String _formatRupiah(int amount) {
-  if (amount <= 0) {
-    return 'Rp0';
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 260,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: AppRadius.sheet,
+      ),
+      child: Text(message),
+    );
   }
-
-  final raw = amount.toString();
-  final buffer = StringBuffer();
-
-  for (var index = 0; index < raw.length; index++) {
-    if (index != 0 && (raw.length - index) % 3 == 0) {
-      buffer.write('.');
-    }
-    buffer.write(raw[index]);
-  }
-
-  return 'Rp$buffer';
 }
 
-const _walletOptions = [
-  _WalletOption('Tunai', Icons.payments_rounded),
-  _WalletOption('E-Wallet', Icons.account_balance_wallet_rounded),
-  _WalletOption('Rekening', Icons.account_balance_rounded),
-  _WalletOption('Tabungan', Icons.savings_rounded),
-];
+List<String> _frequentLabels(TransactionType type) {
+  switch (type) {
+    case TransactionType.expense:
+      return [
+        'Makanan',
+        'Transportasi',
+        'Belanja Harian',
+        'Tagihan',
+        'Langganan Aplikasi',
+        'Lainnya',
+      ];
+    case TransactionType.income:
+      return ['Gaji', 'Jasa', 'Project', 'Uang Saku', 'Cashback', 'Lainnya'];
+    case TransactionType.transfer:
+      return const [];
+  }
+}
 
-const _dateOptions = ['Hari ini', 'Kemarin', 'Pilih tanggal'];
+IconData _categoryIcon(String key) {
+  switch (key) {
+    case 'food':
+      return Icons.restaurant_rounded;
+    case 'transport':
+      return Icons.directions_car_rounded;
+    case 'income':
+      return Icons.work_rounded;
+    case 'bill':
+      return Icons.receipt_long_rounded;
+    case 'savings':
+      return Icons.savings_rounded;
+    default:
+      return Icons.category_rounded;
+  }
+}
 
-const _expenseFrequent = [
-  _CategoryOption('Makanan', icon: Icons.restaurant_rounded),
-  _CategoryOption('Transportasi', icon: Icons.directions_car_rounded),
-  _CategoryOption('Belanja Harian', icon: Icons.shopping_bag_rounded),
-  _CategoryOption('Tagihan', icon: Icons.receipt_long_rounded),
-  _CategoryOption('Langganan Aplikasi', icon: Icons.apps_rounded),
-  _CategoryOption('Lainnya', icon: Icons.more_horiz_rounded),
-];
-
-const _incomeFrequent = [
-  _CategoryOption('Gaji', icon: Icons.work_rounded),
-  _CategoryOption('Jasa', icon: Icons.handyman_rounded),
-  _CategoryOption('Project', icon: Icons.assignment_rounded),
-  _CategoryOption('Uang Saku', icon: Icons.wallet_rounded),
-  _CategoryOption('Cashback', icon: Icons.redeem_rounded),
-  _CategoryOption('Lainnya', icon: Icons.more_horiz_rounded),
-];
-
-const _expenseGroups = [
-  _CategoryGroup(
-    title: 'Kebutuhan Harian',
-    accentColor: AppColors.expenseRed,
-    items: [
-      _CategoryOption('Makanan'),
-      _CategoryOption('Minuman'),
-      _CategoryOption('Belanja Harian'),
-      _CategoryOption('Transportasi'),
-      _CategoryOption('Bahan Bakar'),
-      _CategoryOption('Parkir'),
-      _CategoryOption('Pulsa & Internet'),
-      _CategoryOption('Laundry'),
-      _CategoryOption('Kebutuhan Rumah'),
-    ],
-  ),
-  _CategoryGroup(
-    title: 'Tagihan & Langganan',
-    accentColor: AppColors.warningOrange,
-    items: [
-      _CategoryOption('Listrik'),
-      _CategoryOption('Air'),
-      _CategoryOption('WiFi'),
-      _CategoryOption('Sewa/Kos/Kontrakan'),
-      _CategoryOption('Cicilan'),
-      _CategoryOption('Asuransi'),
-      _CategoryOption('Pajak'),
-      _CategoryOption('Langganan Aplikasi'),
-      _CategoryOption('Software Kerja'),
-      _CategoryOption('Cloud Storage'),
-      _CategoryOption('Streaming'),
-      _CategoryOption('Adobe/Design Tools'),
-      _CategoryOption('Domain & Hosting'),
-    ],
-  ),
-  _CategoryGroup(
-    title: 'Kesehatan',
-    accentColor: AppColors.primary,
-    items: [
-      _CategoryOption('Obat'),
-      _CategoryOption('Dokter'),
-      _CategoryOption('Rumah Sakit'),
-      _CategoryOption('Vitamin'),
-      _CategoryOption('Skincare'),
-      _CategoryOption('Perawatan Diri'),
-      _CategoryOption('Olahraga'),
-    ],
-  ),
-  _CategoryGroup(
-    title: 'Pendidikan & Produktivitas',
-    accentColor: AppColors.infoBlue,
-    items: [
-      _CategoryOption('Buku'),
-      _CategoryOption('Kursus'),
-      _CategoryOption('Sertifikasi'),
-      _CategoryOption('Alat Tulis'),
-      _CategoryOption('Print/Tugas'),
-      _CategoryOption('Peralatan Kerja'),
-      _CategoryOption('Aplikasi Produktivitas'),
-    ],
-  ),
-  _CategoryGroup(
-    title: 'Hiburan & Gaya Hidup',
-    accentColor: AppColors.warningOrange,
-    items: [
-      _CategoryOption('Hiburan'),
-      _CategoryOption('Nongkrong'),
-      _CategoryOption('Bioskop'),
-      _CategoryOption('Game'),
-      _CategoryOption('Liburan'),
-      _CategoryOption('Hobi'),
-      _CategoryOption('Fashion'),
-      _CategoryOption('Hadiah'),
-    ],
-  ),
-  _CategoryGroup(
-    title: 'Keuangan',
-    accentColor: AppColors.infoBlue,
-    items: [
-      _CategoryOption('Tabungan'),
-      _CategoryOption('Investasi'),
-      _CategoryOption('Dana Darurat'),
-      _CategoryOption('Transfer Keluar'),
-      _CategoryOption('Biaya Admin'),
-      _CategoryOption('Donasi'),
-      _CategoryOption('Hutang Dibayar'),
-    ],
-  ),
-  _CategoryGroup(
-    title: 'Lainnya',
-    accentColor: AppColors.textSecondary,
-    items: [_CategoryOption('Lainnya')],
-  ),
-];
-
-const _incomeGroups = [
-  _CategoryGroup(
-    title: 'Penghasilan',
-    accentColor: AppColors.incomeGreen,
-    items: [
-      _CategoryOption('Gaji'),
-      _CategoryOption('Upah'),
-      _CategoryOption('Bonus'),
-      _CategoryOption('Komisi'),
-      _CategoryOption('Tunjangan'),
-      _CategoryOption('Lembur'),
-    ],
-  ),
-  _CategoryGroup(
-    title: 'Usaha & Jasa',
-    accentColor: AppColors.primary,
-    items: [
-      _CategoryOption('Penjualan'),
-      _CategoryOption('Jasa'),
-      _CategoryOption('Project'),
-      _CategoryOption('Freelance'),
-      _CategoryOption('Konsultasi'),
-      _CategoryOption('Royalti'),
-      _CategoryOption('Affiliate'),
-    ],
-  ),
-  _CategoryGroup(
-    title: 'Keuangan',
-    accentColor: AppColors.infoBlue,
-    items: [
-      _CategoryOption('Cashback'),
-      _CategoryOption('Refund'),
-      _CategoryOption('Bunga'),
-      _CategoryOption('Dividen'),
-      _CategoryOption('Investasi Cair'),
-      _CategoryOption('Tabungan Dicairkan'),
-    ],
-  ),
-  _CategoryGroup(
-    title: 'Dukungan & Lainnya',
-    accentColor: AppColors.incomeGreen,
-    items: [
-      _CategoryOption('Uang Saku'),
-      _CategoryOption('Hadiah'),
-      _CategoryOption('Bantuan'),
-      _CategoryOption('Pinjaman Masuk'),
-      _CategoryOption('Lainnya'),
-    ],
-  ),
-];
+IconData _walletIcon(String type) {
+  switch (type) {
+    case 'ewallet':
+      return Icons.account_balance_wallet_rounded;
+    case 'bank':
+      return Icons.account_balance_rounded;
+    case 'savings':
+      return Icons.savings_rounded;
+    default:
+      return Icons.payments_rounded;
+  }
+}

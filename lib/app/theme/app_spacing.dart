@@ -14,6 +14,7 @@ class AppSpacing {
   static const double huge = 40;
   static const double screen = 20;
   static const double webMaxWidth = 430;
+  static const double compactControlWidth = 320;
   static const double webFrameMargin = 24;
   static const double navHeight = 74;
   static const double navBottomInset = 12;
@@ -21,6 +22,7 @@ class AppSpacing {
   static const double iconTile = 44;
   static const double iconTileSmall = 40;
   static const double metricDot = 8;
+  static const double transactionAmountMaxWidth = 132;
 
   static const EdgeInsets screenPadding = EdgeInsets.symmetric(
     horizontal: screen,

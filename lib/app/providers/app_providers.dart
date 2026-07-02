@@ -1,0 +1,89 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../data/local/database/app_database.dart';
+import '../../data/repositories/analytics_repository.dart';
+import '../../data/repositories/app_models.dart';
+import '../../data/repositories/backup_repository.dart';
+import '../../data/repositories/bootstrap_repository.dart';
+import '../../data/repositories/budget_repository.dart';
+import '../../data/repositories/category_repository.dart';
+import '../../data/repositories/dashboard_repository.dart';
+import '../../data/repositories/settings_repository.dart';
+import '../../data/repositories/transaction_repository.dart';
+import '../../data/repositories/wallet_repository.dart';
+
+final databaseProvider = Provider<AppDatabase>((ref) {
+  final database = AppDatabase.defaults();
+  ref.onDispose(database.close);
+  return database;
+});
+
+final bootstrapRepositoryProvider = Provider<BootstrapRepository>((ref) {
+  return BootstrapRepository(ref.watch(databaseProvider));
+});
+
+final appBootstrapProvider = FutureProvider<void>((ref) async {
+  await ref.watch(bootstrapRepositoryProvider).ensureSeeded();
+});
+
+final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
+  return SettingsRepository(ref.watch(databaseProvider));
+});
+
+final appSettingsProvider = StreamProvider<AppSettingEntry?>((ref) {
+  return ref.watch(settingsRepositoryProvider).watchSettings();
+});
+
+final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
+  return CategoryRepository(ref.watch(databaseProvider));
+});
+
+final categoriesProvider = StreamProvider<List<CategoryEntry>>((ref) {
+  return ref.watch(categoryRepositoryProvider).watchAll();
+});
+
+final walletRepositoryProvider = Provider<WalletRepository>((ref) {
+  return WalletRepository(ref.watch(databaseProvider));
+});
+
+final walletBalancesProvider = StreamProvider<List<WalletBalance>>((ref) {
+  return ref.watch(walletRepositoryProvider).watchWalletBalances();
+});
+
+final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
+  return TransactionRepository(ref.watch(databaseProvider));
+});
+
+final transactionDetailsProvider = StreamProvider<List<TransactionDetail>>((
+  ref,
+) {
+  return ref.watch(transactionRepositoryProvider).watchDetails();
+});
+
+final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
+  return DashboardRepository(ref.watch(databaseProvider));
+});
+
+final dashboardSummaryProvider = StreamProvider<DashboardSummary>((ref) {
+  return ref.watch(dashboardRepositoryProvider).watchSummary();
+});
+
+final budgetRepositoryProvider = Provider<BudgetRepository>((ref) {
+  return BudgetRepository(ref.watch(databaseProvider));
+});
+
+final budgetProgressProvider = StreamProvider<List<BudgetProgress>>((ref) {
+  return ref.watch(budgetRepositoryProvider).watchProgress();
+});
+
+final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
+  return AnalyticsRepository(ref.watch(databaseProvider));
+});
+
+final analyticsSummaryProvider = StreamProvider<AnalyticsSummary>((ref) {
+  return ref.watch(analyticsRepositoryProvider).watchSummary();
+});
+
+final backupRepositoryProvider = Provider<BackupRepository>((ref) {
+  return BackupRepository(ref.watch(databaseProvider));
+});

@@ -12,6 +12,15 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
+  flutter_riverpod: ^3.3.2
+  drift: ^2.34.0
+  drift_flutter: ^0.3.0
+  sqlite3_flutter_libs: ^0.6.0+eol
+  intl: ^0.20.3
+  fl_chart: ^1.2.0
+  file_picker: 8.3.2
+  share_plus: 10.1.4
+  csv: ^8.0.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.3
@@ -20,6 +29,8 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+  build_runner: ^2.15.0
+  drift_dev: ^2.34.0
 
 flutter_launcher_icons:
   android: true
@@ -33,4 +44,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/icons/
+    - assets/icons/app_icon.png

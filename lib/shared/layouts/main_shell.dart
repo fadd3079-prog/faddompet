@@ -75,6 +75,8 @@ class _MainShellState extends State<MainShell> {
     ];
 
     return Scaffold(
+      extendBody: true,
+      extendBodyBehindAppBar: true,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final theme = Theme.of(context);
@@ -113,7 +115,7 @@ class _MainShellState extends State<MainShell> {
                       : null,
                   boxShadow: showFrame ? AppShadows.frame(brightness) : null,
                 ),
-                clipBehavior: Clip.antiAlias,
+                clipBehavior: showFrame ? Clip.antiAlias : Clip.none,
                 child: Stack(
                   children: [
                     Positioned.fill(

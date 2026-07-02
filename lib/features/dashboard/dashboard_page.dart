@@ -1,78 +1,143 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/providers/app_providers.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_shadows.dart';
 import '../../app/theme/app_spacing.dart';
+import '../../core/enums/transaction_type.dart';
+import '../../core/formatters/currency_formatter.dart';
+import '../../core/formatters/date_formatter.dart';
+import '../../data/repositories/app_models.dart';
 import '../../shared/components/balance_hero_card.dart';
 import '../../shared/components/insight_card.dart';
 import '../../shared/components/section_header.dart';
 import '../../shared/widgets/empty_state.dart';
+import '../transactions/widgets/transaction_tile.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const SafeArea(
-      bottom: false,
-      child: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.screen,
-              AppSpacing.xl,
-              AppSpacing.screen,
-              AppSpacing.contentBottomInset,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _DashboardHeader(),
-                  SizedBox(height: AppSpacing.xl),
-                  BalanceHeroCard(
-                    totalBalance: 'Rp0',
-                    walletInfo: '0 dompet',
-                    monthlyStatus: 'Siap mulai',
-                  ),
-                  SizedBox(height: AppSpacing.xxl),
-                  SectionHeader(
-                    title: 'Ringkasan bulan ini',
-                    subtitle: 'Bulan berjalan',
-                  ),
-                  SizedBox(height: AppSpacing.lg),
-                  _MonthlySnapshotCard(),
-                  SizedBox(height: AppSpacing.xxl),
-                  InsightCard(
-                    title: 'Ringkasan belum tersedia',
-                    message:
-                        'Tambahkan transaksi pertama untuk mulai melihat ringkasan keuanganmu.',
-                  ),
-                  SizedBox(height: AppSpacing.xxl),
-                  SectionHeader(
-                    title: 'Riwayat terbaru',
-                    subtitle: 'Transaksi terakhir akan muncul di sini',
-                  ),
-                  SizedBox(height: AppSpacing.lg),
-                  _RecentTransactionsCard(),
-                ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summary = ref.watch(dashboardSummaryProvider);
+    final settings = ref
+        .watch(appSettingsProvider)
+        .maybeWhen(data: (value) => value, orElse: () => null);
+    final hideBalance = settings?.hideBalance ?? false;
+
+    return summary.when(
+      data: (data) => SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screen,
+                AppSpacing.xl,
+                AppSpacing.screen,
+                AppSpacing.contentBottomInset,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _DashboardHeader(userName: settings?.userName),
+                    const SizedBox(height: AppSpacing.xl),
+                    BalanceHeroCard(
+                      totalBalance: CurrencyFormatter.rupiah(
+                        data.totalBalance,
+                        hidden: hideBalance,
+                      ),
+                      walletInfo: '${data.walletCount} dompet',
+                      monthlyStatus: data.netCashflow >= 0
+                          ? 'Positif'
+                          : 'Perlu dicek',
+                      hideBalance: hideBalance,
+                      onToggleVisibility: () {
+                        ref
+                            .read(settingsRepositoryProvider)
+                            .setHideBalance(!hideBalance);
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.xxl),
+                    const SectionHeader(
+                      title: 'Ringkasan bulan ini',
+                      subtitle: 'Bulan berjalan',
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _MonthlySnapshotCard(
+                      summary: data,
+                      hideBalance: hideBalance,
+                    ),
+                    const SizedBox(height: AppSpacing.xxl),
+                    InsightCard(
+                      title: _insightTitle(data),
+                      message: _insightMessage(data),
+                    ),
+                    const SizedBox(height: AppSpacing.xxl),
+                    const SectionHeader(
+                      title: 'Riwayat terbaru',
+                      subtitle: 'Transaksi terakhir akan muncul di sini',
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _RecentTransactionsCard(
+                      transactions: data.recentTransactions,
+                      hideBalance: hideBalance,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+      loading: () => const Center(child: Text('Memuat ringkasan')),
+      error: (_, _) => const Center(child: Text('Ringkasan belum bisa dimuat')),
     );
+  }
+
+  String _insightTitle(DashboardSummary summary) {
+    if (summary.recentTransactions.isEmpty) {
+      return 'Ringkasan belum tersedia';
+    }
+    if (summary.budgetLimit > 0 && summary.budgetRatio >= 1) {
+      return 'Budget terlampaui';
+    }
+    if (summary.topExpenseCategory != null) {
+      return 'Pengeluaran terbesar: ${summary.topExpenseCategory}';
+    }
+    return 'Keuangan bulan ini tercatat';
+  }
+
+  String _insightMessage(DashboardSummary summary) {
+    if (summary.recentTransactions.isEmpty) {
+      return 'Tambahkan transaksi pertama untuk mulai melihat ringkasan keuanganmu.';
+    }
+    if (summary.budgetLimit > 0) {
+      final percent = (summary.budgetRatio * 100).round();
+      return 'Budget bulan ini sudah terpakai $percent%.';
+    }
+    if (summary.netCashflow >= 0) {
+      return 'Pemasukan bulan ini lebih besar atau sama dengan pengeluaran.';
+    }
+    return 'Pengeluaran bulan ini lebih besar dari pemasukan.';
   }
 }
 
 class _DashboardHeader extends StatelessWidget {
-  const _DashboardHeader();
+  const _DashboardHeader({this.userName});
+
+  final String? userName;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.colorScheme.brightness == Brightness.dark;
+    final greeting = userName == null || userName!.trim().isEmpty
+        ? 'Halo'
+        : 'Halo, ${userName!.trim()}';
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,7 +165,7 @@ class _DashboardHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              Text('Halo', style: theme.textTheme.displayMedium),
+              Text(greeting, style: theme.textTheme.displayMedium),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Catat pemasukan dan pengeluaran harian dengan mudah.',
@@ -138,7 +203,13 @@ class _DashboardHeader extends StatelessWidget {
 }
 
 class _MonthlySnapshotCard extends StatelessWidget {
-  const _MonthlySnapshotCard();
+  const _MonthlySnapshotCard({
+    required this.summary,
+    required this.hideBalance,
+  });
+
+  final DashboardSummary summary;
+  final bool hideBalance;
 
   @override
   Widget build(BuildContext context) {
@@ -161,11 +232,16 @@ class _MonthlySnapshotCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: _FlowAmount(
                   label: 'Masuk',
-                  value: 'Rp0',
-                  caption: 'Belum ada pemasukan',
+                  value: CurrencyFormatter.rupiah(
+                    summary.monthlyIncome,
+                    hidden: hideBalance,
+                  ),
+                  caption: summary.monthlyIncome == 0
+                      ? 'Belum ada pemasukan'
+                      : DateFormatter.monthLabel(DateTime.now()),
                   accentColor: AppColors.incomeGreen,
                 ),
               ),
@@ -180,11 +256,16 @@ class _MonthlySnapshotCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: _FlowAmount(
                   label: 'Keluar',
-                  value: 'Rp0',
-                  caption: 'Belum ada pengeluaran',
+                  value: CurrencyFormatter.rupiah(
+                    summary.monthlyExpense,
+                    hidden: hideBalance,
+                  ),
+                  caption: summary.monthlyExpense == 0
+                      ? 'Belum ada pengeluaran'
+                      : DateFormatter.monthLabel(DateTime.now()),
                   accentColor: AppColors.expenseRed,
                 ),
               ),
@@ -203,18 +284,21 @@ class _MonthlySnapshotCard extends StatelessWidget {
               children: [
                 _MiniStatusRow(
                   label: 'Selisih',
-                  value: 'Rp0',
+                  value: CurrencyFormatter.rupiah(
+                    summary.netCashflow,
+                    hidden: hideBalance,
+                  ),
                   helper: 'Pemasukan dikurangi pengeluaran',
                   accentColor: AppColors.infoBlue,
-                  theme: theme,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _MiniStatusRow(
                   label: 'Anggaran',
-                  value: '0%',
+                  value: summary.budgetLimit == 0
+                      ? 'Belum ada'
+                      : '${(summary.budgetRatio * 100).round()}%',
                   helper: 'Terpakai bulan ini',
                   accentColor: AppColors.warningOrange,
-                  theme: theme,
                 ),
               ],
             ),
@@ -290,17 +374,17 @@ class _MiniStatusRow extends StatelessWidget {
     required this.value,
     required this.helper,
     required this.accentColor,
-    required this.theme,
   });
 
   final String label;
   final String value;
   final String helper;
   final Color accentColor;
-  final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       children: [
         Container(
@@ -340,7 +424,13 @@ class _MiniStatusRow extends StatelessWidget {
 }
 
 class _RecentTransactionsCard extends StatelessWidget {
-  const _RecentTransactionsCard();
+  const _RecentTransactionsCard({
+    required this.transactions,
+    required this.hideBalance,
+  });
+
+  final List<TransactionDetail> transactions;
+  final bool hideBalance;
 
   @override
   Widget build(BuildContext context) {
@@ -358,13 +448,74 @@ class _RecentTransactionsCard extends StatelessWidget {
         ),
         boxShadow: AppShadows.soft(brightness),
       ),
-      child: const EmptyState(
-        compact: true,
-        icon: Icons.receipt_long_rounded,
-        title: 'Belum ada transaksi',
-        message:
-            'Tambahkan transaksi pertama untuk mulai melihat riwayat keuanganmu.',
-      ),
+      child: transactions.isEmpty
+          ? const EmptyState(
+              compact: true,
+              icon: Icons.receipt_long_rounded,
+              title: 'Belum ada transaksi',
+              message:
+                  'Tambahkan transaksi pertama untuk mulai melihat riwayat keuanganmu.',
+            )
+          : Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                children: [
+                  for (var index = 0; index < transactions.length; index++) ...[
+                    _tile(transactions[index], hideBalance),
+                    if (index != transactions.length - 1)
+                      const SizedBox(height: AppSpacing.md),
+                  ],
+                ],
+              ),
+            ),
     );
   }
+}
+
+TransactionTile _tile(TransactionDetail detail, bool hideBalance) {
+  final transaction = detail.transaction;
+  final type = _previewType(detail.type);
+  final title = detail.type == TransactionType.transfer
+      ? '${detail.wallet.name} ke ${detail.transferWallet?.name ?? 'Dompet'}'
+      : detail.category?.name ?? 'Transaksi';
+  final subtitle = detail.type == TransactionType.transfer
+      ? 'Transfer antar dompet'
+      : detail.wallet.name;
+
+  return TransactionTile(
+    title: title,
+    subtitle: subtitle,
+    timeLabel: DateFormatter.dateTimeLabel(transaction.date),
+    amount: CurrencyFormatter.rupiah(transaction.amount, hidden: hideBalance),
+    type: type,
+    icon: _transactionIcon(detail),
+  );
+}
+
+TransactionPreviewType _previewType(TransactionType type) {
+  switch (type) {
+    case TransactionType.income:
+      return TransactionPreviewType.income;
+    case TransactionType.expense:
+      return TransactionPreviewType.expense;
+    case TransactionType.transfer:
+      return TransactionPreviewType.transfer;
+  }
+}
+
+IconData _transactionIcon(TransactionDetail detail) {
+  if (detail.type == TransactionType.transfer) {
+    return Icons.swap_horiz_rounded;
+  }
+  final name = detail.category?.name.toLowerCase() ?? '';
+  if (name.contains('makan') || name.contains('minuman')) {
+    return Icons.restaurant_rounded;
+  }
+  if (name.contains('transport') || name.contains('bahan bakar')) {
+    return Icons.directions_car_rounded;
+  }
+  if (detail.type == TransactionType.income) {
+    return Icons.work_rounded;
+  }
+  return Icons.category_rounded;
 }

@@ -11,11 +11,15 @@ class BalanceHeroCard extends StatelessWidget {
     required this.totalBalance,
     required this.walletInfo,
     required this.monthlyStatus,
+    this.hideBalance = false,
+    this.onToggleVisibility,
   });
 
   final String totalBalance;
   final String walletInfo;
   final String monthlyStatus;
+  final bool hideBalance;
+  final VoidCallback? onToggleVisibility;
 
   @override
   Widget build(BuildContext context) {
@@ -56,18 +60,24 @@ class BalanceHeroCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                width: AppSpacing.iconTileSmall,
-                height: AppSpacing.iconTileSmall,
-                decoration: BoxDecoration(
-                  color: AppColors.onDarkSubtle,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.onDarkBorder),
-                ),
-                child: const Icon(
-                  Icons.visibility_off_rounded,
-                  color: AppColors.onDark,
-                  size: 19,
+              GestureDetector(
+                onTap: onToggleVisibility,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: AppSpacing.iconTileSmall,
+                  height: AppSpacing.iconTileSmall,
+                  decoration: BoxDecoration(
+                    color: AppColors.onDarkSubtle,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: AppColors.onDarkBorder),
+                  ),
+                  child: Icon(
+                    hideBalance
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                    color: AppColors.onDark,
+                    size: 19,
+                  ),
                 ),
               ),
             ],
