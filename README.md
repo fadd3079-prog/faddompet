@@ -23,7 +23,18 @@
 
 ## Screenshots
 
-Release screenshots are prepared in `docs/screenshots/`. Add small Android screenshots there and keep them around 180-220 px wide in this section.
+<p align="center">
+  <img width="180" alt="FadDompet dashboard" src="docs/screenshots/dashboard.webp" />
+  <img width="180" alt="FadDompet app lock" src="docs/screenshots/app-lock.webp" />
+  <img width="180" alt="FadDompet add transaction" src="docs/screenshots/add-transaction.webp" />
+  <img width="180" alt="FadDompet wallets" src="docs/screenshots/wallets.webp" />
+</p>
+
+<p align="center">
+  <img width="180" alt="FadDompet transactions" src="docs/screenshots/transactions.webp" />
+  <img width="180" alt="FadDompet settings" src="docs/screenshots/settings.webp" />
+  <img width="180" alt="FadDompet analytics" src="docs/screenshots/analytics.webp" />
+</p>
 
 ## Features
 
