@@ -11,6 +11,7 @@ import '../../data/repositories/dashboard_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/security_repository.dart';
 import '../../data/repositories/transaction_repository.dart';
+import '../../data/repositories/update_repository.dart';
 import '../../data/repositories/wallet_repository.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -95,4 +96,10 @@ final securityRepositoryProvider = Provider<SecurityRepository>((ref) {
 
 final securitySettingsProvider = FutureProvider<SecuritySettings>((ref) {
   return ref.watch(securityRepositoryProvider).loadSettings();
+});
+
+final updateRepositoryProvider = Provider<UpdateRepository>((ref) {
+  final repository = UpdateRepository();
+  ref.onDispose(repository.close);
+  return repository;
 });

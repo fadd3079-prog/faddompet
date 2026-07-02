@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,6 +54,8 @@ class _AppLockGateState extends ConsumerState<AppLockGate>
   }
 
   Future<void> _checkAutoLock() async {
+    if (kIsWeb) return;
+
     final backgroundedAt = _backgroundedAt;
     _backgroundedAt = null;
     if (backgroundedAt == null) return;
@@ -71,6 +74,8 @@ class _AppLockGateState extends ConsumerState<AppLockGate>
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) return widget.child;
+
     final security = ref.watch(securitySettingsProvider);
 
     return security.when(

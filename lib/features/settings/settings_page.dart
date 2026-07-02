@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,6 +11,7 @@ import '../../app/theme/app_spacing.dart';
 import '../../core/enums/category_type.dart';
 import '../../data/local/database/app_database.dart';
 import '../analytics/analytics_page.dart';
+import 'widgets/app_update_sheet.dart';
 import '../../shared/widgets/app_brand_mark.dart';
 import '../../shared/widgets/app_confirm_dialog.dart';
 import '../../shared/widgets/app_form_actions.dart';
@@ -74,10 +76,18 @@ class SettingsPage extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.lock_rounded,
             title: 'Keamanan',
-            subtitle: security?.pinEnabled ?? false
+            subtitle: kIsWeb
+                ? 'Kunci aplikasi tersedia di Android'
+                : security?.pinEnabled ?? false
                 ? 'PIN aktif, ${_autoLockLabel(security!.autoLockMinutes)}'
                 : 'Buat PIN untuk mengunci aplikasi',
-            onTap: () => _showSecuritySheet(context),
+            onTap: kIsWeb
+                ? () => TopToast.show(
+                    context,
+                    'Kunci aplikasi tersedia di Android.',
+                    type: TopToastType.warning,
+                  )
+                : () => _showSecuritySheet(context),
           ),
           _SettingsTile(
             icon: Icons.backup_rounded,
@@ -124,6 +134,12 @@ class SettingsPage extends ConsumerWidget {
               url: 'https://github.com/fadd3079-prog/faddompet',
               actionLabel: 'Buka GitHub',
             ),
+          ),
+          _SettingsTile(
+            icon: Icons.system_update_rounded,
+            title: 'Pembaruan Aplikasi',
+            subtitle: 'Periksa dan unduh versi terbaru FadDompet.',
+            onTap: () => _showUpdateSheet(context),
           ),
           _SettingsTile(
             icon: Icons.info_rounded,
@@ -491,6 +507,14 @@ class SettingsPage extends ConsumerWidget {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) => const _CategoryManagerSheet(),
+    );
+  }
+
+  void _showUpdateSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => const AppUpdateSheet(),
     );
   }
 

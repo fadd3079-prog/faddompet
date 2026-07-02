@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -60,8 +61,16 @@ class SecurityRepository {
   static const _cooldownUntilKey = 'security_cooldown_until';
   static const _maxFailedAttempts = 5;
   static const _cooldown = Duration(seconds: 30);
+  static const _webPreviewSettings = SecuritySettings(
+    pinEnabled: false,
+    biometricEnabled: false,
+    autoLockMinutes: 1,
+    pinLength: 6,
+  );
 
   Future<SecuritySettings> loadSettings() async {
+    if (kIsWeb) return _webPreviewSettings;
+
     final hash = await _storage.read(key: _pinHashKey);
     final biometric = await _storage.read(key: _biometricKey);
     final autoLock = await _storage.read(key: _autoLockKey);
@@ -75,6 +84,10 @@ class SecurityRepository {
   }
 
   Future<void> savePin(String pin) async {
+    if (kIsWeb) {
+      throw ArgumentError('Kunci aplikasi tersedia di Android.');
+    }
+
     _validatePin(pin);
     final salt = _salt();
     await _storage.write(key: _pinSaltKey, value: salt);
@@ -83,6 +96,8 @@ class SecurityRepository {
   }
 
   Future<bool> verifyPin(String pin) async {
+    if (kIsWeb) return false;
+
     final hash = await _storage.read(key: _pinHashKey);
     final salt = await _storage.read(key: _pinSaltKey);
     if (hash == null || salt == null) return false;
@@ -90,6 +105,8 @@ class SecurityRepository {
   }
 
   Future<void> disablePin() async {
+    if (kIsWeb) return;
+
     await _storage.delete(key: _pinHashKey);
     await _storage.delete(key: _pinSaltKey);
     await _storage.delete(key: _pinLengthKey);
@@ -99,6 +116,13 @@ class SecurityRepository {
   }
 
   Future<void> setBiometricEnabled(bool value) async {
+    if (kIsWeb) {
+      if (value) {
+        throw ArgumentError('Biometrik tersedia di Android.');
+      }
+      return;
+    }
+
     final settings = await loadSettings();
     if (!settings.pinEnabled) {
       throw ArgumentError('Buat PIN terlebih dahulu.');
@@ -110,16 +134,24 @@ class SecurityRepository {
   }
 
   Future<void> setAutoLockMinutes(int minutes) async {
+    if (kIsWeb) return;
+
     await _storage.write(key: _autoLockKey, value: minutes.toString());
   }
 
   Future<bool> canUseBiometric() async {
+    if (kIsWeb) return false;
+
     final supported = await _localAuth.isDeviceSupported();
     final canCheck = await _localAuth.canCheckBiometrics;
     return supported && canCheck;
   }
 
   Future<bool> unlockWithBiometric() async {
+    if (kIsWeb) {
+      throw ArgumentError('Biometrik tersedia di Android.');
+    }
+
     if (!await canUseBiometric()) {
       throw ArgumentError('Biometrik tidak tersedia di perangkat ini.');
     }
@@ -131,6 +163,10 @@ class SecurityRepository {
   }
 
   Future<PinAttemptState> loadPinAttemptState() async {
+    if (kIsWeb) {
+      return const PinAttemptState(failedAttempts: 0, cooldownUntil: null);
+    }
+
     final failedAttempts = int.tryParse(
       await _storage.read(key: _failedAttemptsKey) ?? '',
     );
@@ -151,6 +187,10 @@ class SecurityRepository {
   }
 
   Future<PinAttemptState> registerFailedPinAttempt() async {
+    if (kIsWeb) {
+      return const PinAttemptState(failedAttempts: 0, cooldownUntil: null);
+    }
+
     final state = await loadPinAttemptState();
     if (state.isCoolingDown) return state;
 
@@ -171,6 +211,8 @@ class SecurityRepository {
   }
 
   Future<void> clearPinAttemptState() async {
+    if (kIsWeb) return;
+
     await _storage.delete(key: _failedAttemptsKey);
     await _storage.delete(key: _cooldownUntilKey);
   }
