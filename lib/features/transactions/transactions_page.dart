@@ -12,6 +12,7 @@ import '../../core/formatters/date_formatter.dart';
 import '../../data/repositories/app_models.dart';
 import '../../shared/components/add_transaction_sheet.dart';
 import '../../shared/widgets/app_confirm_dialog.dart';
+import '../../shared/widgets/app_form_actions.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/top_toast.dart';
 import 'widgets/period_selector.dart';
@@ -267,32 +268,18 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
                       : 'Tidak ada catatan',
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(sheetContext);
-                          _edit(detail);
-                        },
-                        child: const Text('Edit'),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.expenseRed,
-                          foregroundColor: AppColors.onDark,
-                        ),
-                        onPressed: () {
-                          Navigator.pop(sheetContext);
-                          _confirmDelete(detail);
-                        },
-                        child: const Text('Hapus'),
-                      ),
-                    ),
-                  ],
+                AppFormActions(
+                  secondaryLabel: 'Edit',
+                  primaryLabel: 'Hapus',
+                  danger: true,
+                  onSecondaryPressed: () {
+                    Navigator.pop(sheetContext);
+                    _edit(detail);
+                  },
+                  onPrimaryPressed: () {
+                    Navigator.pop(sheetContext);
+                    _confirmDelete(detail);
+                  },
                 ),
               ],
             ),

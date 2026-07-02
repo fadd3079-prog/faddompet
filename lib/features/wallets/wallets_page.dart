@@ -12,6 +12,7 @@ import '../../core/formatters/rupiah_input_formatter.dart';
 import '../../data/local/database/app_database.dart';
 import '../../data/repositories/app_models.dart';
 import '../../shared/widgets/app_confirm_dialog.dart';
+import '../../shared/widgets/app_form_actions.dart';
 import '../../shared/widgets/app_icon_action_button.dart';
 import '../../shared/widgets/pressable_surface.dart';
 import '../../shared/widgets/top_toast.dart';
@@ -183,56 +184,28 @@ class WalletsPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              Navigator.pop(sheetContext);
-                              _showWalletForm(context, ref, wallet.wallet);
-                            },
-                            child: const Text('Edit'),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: FilledButton(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: wallet.wallet.isArchived
-                                  ? AppColors.primary
-                                  : AppColors.expenseRed,
-                              foregroundColor: AppColors.onDark,
-                            ),
-                            onPressed: () {
-                              Navigator.pop(sheetContext);
-                              if (wallet.wallet.isArchived) {
-                                _archiveWallet(
-                                  context,
-                                  ref,
-                                  wallet.wallet,
-                                  false,
-                                );
-                              } else if (count > 0) {
-                                _archiveWallet(
-                                  context,
-                                  ref,
-                                  wallet.wallet,
-                                  true,
-                                );
-                              } else {
-                                _deleteWallet(context, ref, wallet.wallet);
-                              }
-                            },
-                            child: Text(
-                              wallet.wallet.isArchived
-                                  ? 'Aktifkan'
-                                  : count > 0
-                                  ? 'Nonaktifkan'
-                                  : 'Hapus',
-                            ),
-                          ),
-                        ),
-                      ],
+                    AppFormActions(
+                      secondaryLabel: 'Edit',
+                      primaryLabel: wallet.wallet.isArchived
+                          ? 'Aktifkan'
+                          : count > 0
+                          ? 'Nonaktifkan'
+                          : 'Hapus',
+                      danger: !wallet.wallet.isArchived,
+                      onSecondaryPressed: () {
+                        Navigator.pop(sheetContext);
+                        _showWalletForm(context, ref, wallet.wallet);
+                      },
+                      onPrimaryPressed: () {
+                        Navigator.pop(sheetContext);
+                        if (wallet.wallet.isArchived) {
+                          _archiveWallet(context, ref, wallet.wallet, false);
+                        } else if (count > 0) {
+                          _archiveWallet(context, ref, wallet.wallet, true);
+                        } else {
+                          _deleteWallet(context, ref, wallet.wallet);
+                        }
+                      },
                     ),
                   ],
                 );
@@ -473,12 +446,11 @@ class _WalletFormDialogState extends State<_WalletFormDialog> {
         ],
       ),
       actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        FilledButton(
-          onPressed: () {
+        AppFormActions(
+          secondaryLabel: 'Batal',
+          primaryLabel: 'Simpan',
+          onSecondaryPressed: () => Navigator.pop(context),
+          onPrimaryPressed: () {
             final name = _nameController.text.trim();
             if (name.isEmpty) return;
             Navigator.pop(
@@ -492,7 +464,6 @@ class _WalletFormDialogState extends State<_WalletFormDialog> {
               ),
             );
           },
-          child: const Text('Simpan'),
         ),
       ],
     );

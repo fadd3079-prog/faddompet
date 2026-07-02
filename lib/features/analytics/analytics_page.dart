@@ -13,6 +13,7 @@ import '../../core/formatters/rupiah_input_formatter.dart';
 import '../../data/local/database/app_database.dart';
 import '../../data/repositories/app_models.dart';
 import '../../shared/widgets/app_confirm_dialog.dart';
+import '../../shared/widgets/app_form_actions.dart';
 import '../../shared/widgets/app_icon_action_button.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/pressable_surface.dart';
@@ -219,7 +220,7 @@ class _ChartCard extends StatelessWidget {
         children: [
           Text(title, style: theme.textTheme.titleLarge),
           const SizedBox(height: AppSpacing.xl),
-          SizedBox(height: 190, child: child),
+          SizedBox(height: 220, child: child),
         ],
       ),
     );
@@ -234,7 +235,7 @@ class _DonutChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const Center(child: Text('Belum ada pengeluaran'));
+      return const _ChartEmptyState('Belum ada pengeluaran bulan ini.');
     }
 
     return Row(
@@ -286,6 +287,10 @@ class _LineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (items.every((item) => item.income == 0 && item.expense == 0)) {
+      return const _ChartEmptyState('Belum ada arus kas minggu ini.');
+    }
+
     final spots = [
       for (var index = 0; index < items.length; index++)
         FlSpot(
@@ -299,7 +304,10 @@ class _LineChart extends StatelessWidget {
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
+        minY: _lineMinY(spots),
+        maxY: _lineMaxY(spots),
         lineTouchData: const LineTouchData(enabled: false),
+        clipData: const FlClipData.none(),
         lineBarsData: [
           LineChartBarData(
             spots: spots,
@@ -312,6 +320,20 @@ class _LineChart extends StatelessWidget {
       ),
     );
   }
+
+  double _lineMinY(List<FlSpot> spots) {
+    final value = spots.fold<double>(0, (minY, spot) {
+      return spot.y < minY ? spot.y : minY;
+    });
+    return value == 0 ? -1 : value * 1.18;
+  }
+
+  double _lineMaxY(List<FlSpot> spots) {
+    final value = spots.fold<double>(0, (maxY, spot) {
+      return spot.y > maxY ? spot.y : maxY;
+    });
+    return value == 0 ? 1 : value * 1.18;
+  }
 }
 
 class _BarChart extends StatelessWidget {
@@ -323,11 +345,58 @@ class _BarChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.colorScheme.brightness == Brightness.dark;
+    final maxAmount = items.fold<int>(0, (current, item) {
+      return item.amount > current ? item.amount : current;
+    });
+
+    if (maxAmount == 0) {
+      return const _ChartEmptyState('Belum ada pengeluaran mingguan.');
+    }
 
     return BarChart(
       BarChartData(
-        gridData: const FlGridData(show: false),
-        titlesData: const FlTitlesData(show: false),
+        minY: 0,
+        maxY: (maxAmount / 1000) * 1.24,
+        alignment: BarChartAlignment.spaceAround,
+        gridData: FlGridData(
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (_) => FlLine(
+            color: theme.colorScheme.outline.withValues(alpha: 0.6),
+            strokeWidth: 1,
+          ),
+        ),
+        titlesData: FlTitlesData(
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index < 0 || index >= items.length) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: Text(
+                    items[index].label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
         borderData: FlBorderData(show: false),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
@@ -362,7 +431,7 @@ class _BarChart extends StatelessWidget {
               barRods: [
                 BarChartRodData(
                   toY: items[index].amount.toDouble() / 1000,
-                  width: 22,
+                  width: 24,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   color: AppColors.expenseRed.withValues(alpha: 0.82),
                 ),
@@ -408,10 +477,19 @@ class _TopCategoryList extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(item.label, style: theme.textTheme.titleMedium),
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium,
+                    ),
                   ),
+                  const SizedBox(width: AppSpacing.md),
                   Text(
                     CurrencyFormatter.rupiah(item.amount),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
                     style: theme.textTheme.titleMedium,
                   ),
                 ],
@@ -444,19 +522,10 @@ class _BudgetSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(child: Text('Budget', style: theme.textTheme.titleLarge)),
-            if (items.isNotEmpty)
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.expenseRed,
-                  side: const BorderSide(color: AppColors.expenseRed),
-                ),
-                onPressed: onReset,
-                child: const Text('Reset'),
-              ),
-          ],
+        _BudgetHeader(
+          showReset: items.isNotEmpty,
+          onReset: onReset,
+          titleStyle: theme.textTheme.titleLarge,
         ),
         const SizedBox(height: AppSpacing.md),
         if (items.isEmpty)
@@ -517,11 +586,24 @@ class _BudgetCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(item.label, style: theme.textTheme.titleMedium),
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ),
-                Text(
-                  item.status.label,
-                  style: theme.textTheme.labelLarge?.copyWith(color: color),
+                const SizedBox(width: AppSpacing.md),
+                Flexible(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      item.status.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelLarge?.copyWith(color: color),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -538,6 +620,8 @@ class _BudgetCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               '${CurrencyFormatter.rupiah(item.spent)} dari ${CurrencyFormatter.rupiah(item.budget.limitAmount)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium,
             ),
           ],
@@ -595,6 +679,7 @@ class _BudgetDialogState extends State<_BudgetDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           DropdownButtonFormField<int?>(
+            isExpanded: true,
             initialValue: _categoryId,
             decoration: const InputDecoration(labelText: 'Cakupan'),
             onChanged: editing
@@ -603,12 +688,20 @@ class _BudgetDialogState extends State<_BudgetDialog> {
             items: [
               const DropdownMenuItem<int?>(
                 value: null,
-                child: Text('Budget bulanan'),
+                child: Text(
+                  'Budget bulanan',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               for (final category in expenseCategories)
                 DropdownMenuItem<int?>(
                   value: category.id,
-                  child: Text(category.name),
+                  child: Text(
+                    category.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
             ],
           ),
@@ -626,12 +719,11 @@ class _BudgetDialogState extends State<_BudgetDialog> {
         ],
       ),
       actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        FilledButton(
-          onPressed: () {
+        AppFormActions(
+          secondaryLabel: 'Batal',
+          primaryLabel: 'Simpan',
+          onSecondaryPressed: () => Navigator.pop(context),
+          onPrimaryPressed: () {
             final amount = CurrencyFormatter.parseRupiah(
               _amountController.text,
             );
@@ -641,9 +733,92 @@ class _BudgetDialogState extends State<_BudgetDialog> {
               _BudgetFormResult(categoryId: _categoryId, limitAmount: amount),
             );
           },
-          child: const Text('Simpan'),
         ),
       ],
+    );
+  }
+}
+
+class _BudgetHeader extends StatelessWidget {
+  const _BudgetHeader({
+    required this.showReset,
+    required this.onReset,
+    required this.titleStyle,
+  });
+
+  final bool showReset;
+  final VoidCallback onReset;
+  final TextStyle? titleStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = Text(
+      'Budget',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: titleStyle,
+    );
+
+    if (!showReset) {
+      return SizedBox(width: double.infinity, child: title);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final resetButton = ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 96),
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.expenseRed,
+              side: const BorderSide(color: AppColors.expenseRed),
+            ),
+            onPressed: onReset,
+            child: const Text(
+              'Reset',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        );
+
+        if (constraints.maxWidth < 280) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              title,
+              const SizedBox(height: AppSpacing.md),
+              Align(alignment: Alignment.centerRight, child: resetButton),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: title),
+            const SizedBox(width: AppSpacing.md),
+            resetButton,
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ChartEmptyState extends StatelessWidget {
+  const _ChartEmptyState(this.message);
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        message,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
     );
   }
 }

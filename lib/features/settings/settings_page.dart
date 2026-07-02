@@ -12,6 +12,7 @@ import '../../data/local/database/app_database.dart';
 import '../analytics/analytics_page.dart';
 import '../../shared/widgets/app_brand_mark.dart';
 import '../../shared/widgets/app_confirm_dialog.dart';
+import '../../shared/widgets/app_form_actions.dart';
 import '../../shared/widgets/app_icon_action_button.dart';
 import '../../shared/widgets/pressable_surface.dart';
 import '../../shared/widgets/top_toast.dart';
@@ -516,25 +517,14 @@ class SettingsPage extends ConsumerWidget {
                 Text(note, style: Theme.of(context).textTheme.bodyMedium),
               ],
               const SizedBox(height: AppSpacing.xl),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(sheetContext),
-                      child: const Text('Batal'),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () async {
-                        Navigator.pop(sheetContext);
-                        await _openExternalLink(context, url);
-                      },
-                      child: Text(actionLabel),
-                    ),
-                  ),
-                ],
+              AppFormActions(
+                secondaryLabel: 'Batal',
+                primaryLabel: actionLabel,
+                onSecondaryPressed: () => Navigator.pop(sheetContext),
+                onPrimaryPressed: () async {
+                  Navigator.pop(sheetContext);
+                  await _openExternalLink(context, url);
+                },
               ),
             ],
           ),
@@ -859,11 +849,12 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
         ],
       ),
       actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
+        AppFormActions(
+          secondaryLabel: 'Batal',
+          primaryLabel: 'Simpan',
+          onSecondaryPressed: () => Navigator.pop(context),
+          onPrimaryPressed: _submit,
         ),
-        FilledButton(onPressed: _submit, child: const Text('Simpan')),
       ],
     );
   }
@@ -913,13 +904,12 @@ class _PinVerifyDialogState extends State<_PinVerifyDialog> {
         hint: 'Masukkan PIN saat ini',
       ),
       actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, _controller.text.trim()),
-          child: const Text('Lanjut'),
+        AppFormActions(
+          secondaryLabel: 'Batal',
+          primaryLabel: 'Lanjut',
+          onSecondaryPressed: () => Navigator.pop(context),
+          onPrimaryPressed: () =>
+              Navigator.pop(context, _controller.text.trim()),
         ),
       ],
     );
@@ -1005,17 +995,12 @@ class _ResetDialogState extends State<_ResetDialog> {
         ],
       ),
       actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Batal'),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.expenseRed,
-            foregroundColor: AppColors.onDark,
-          ),
-          onPressed: valid ? () => Navigator.pop(context, true) : null,
-          child: const Text('Reset Data'),
+        AppFormActions(
+          secondaryLabel: 'Batal',
+          primaryLabel: 'Reset Data',
+          danger: true,
+          onSecondaryPressed: () => Navigator.pop(context, false),
+          onPrimaryPressed: valid ? () => Navigator.pop(context, true) : null,
         ),
       ],
     );
@@ -1402,12 +1387,11 @@ class _CategoryDialogState extends State<_CategoryDialog> {
         ),
       ),
       actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        FilledButton(
-          onPressed: () {
+        AppFormActions(
+          secondaryLabel: 'Batal',
+          primaryLabel: 'Simpan',
+          onSecondaryPressed: () => Navigator.pop(context),
+          onPrimaryPressed: () {
             final name = _nameController.text.trim();
             if (name.isEmpty) return;
             Navigator.pop(
@@ -1420,7 +1404,6 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               ),
             );
           },
-          child: const Text('Simpan'),
         ),
       ],
     );

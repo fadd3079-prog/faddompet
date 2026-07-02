@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
+import 'app_form_actions.dart';
 
 Future<bool> showAppConfirmDialog({
   required BuildContext context,
@@ -44,12 +44,6 @@ class AppConfirmDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final confirmStyle = danger
-        ? FilledButton.styleFrom(
-            backgroundColor: AppColors.expenseRed,
-            foregroundColor: AppColors.onDark,
-          )
-        : null;
 
     return AlertDialog(
       title: Text(title),
@@ -61,23 +55,12 @@ class AppConfirmDialog extends StatelessWidget {
         AppSpacing.xl,
       ),
       actions: [
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(cancelLabel),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: FilledButton(
-                style: confirmStyle,
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(confirmLabel),
-              ),
-            ),
-          ],
+        AppFormActions(
+          primaryLabel: confirmLabel,
+          secondaryLabel: cancelLabel,
+          danger: danger,
+          onSecondaryPressed: () => Navigator.pop(context, false),
+          onPrimaryPressed: () => Navigator.pop(context, true),
         ),
       ],
       shape: RoundedRectangleBorder(
