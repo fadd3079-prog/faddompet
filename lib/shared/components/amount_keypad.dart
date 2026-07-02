@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
+import '../widgets/pressable_surface.dart';
 
 class AmountKeypad extends StatelessWidget {
   const AmountKeypad({
@@ -107,9 +108,8 @@ class _KeypadButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: _isBackspace ? 'Hapus angka' : value,
-      child: GestureDetector(
+      child: PressableSurface(
         onTap: onPressed,
-        behavior: HitTestBehavior.opaque,
         child: Container(
           constraints: const BoxConstraints(
             minHeight: AppSpacing.huge + AppSpacing.md,

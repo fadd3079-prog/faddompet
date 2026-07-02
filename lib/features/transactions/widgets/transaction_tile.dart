@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../shared/widgets/pressable_surface.dart';
 
 enum TransactionPreviewType { income, expense, transfer }
 
@@ -34,10 +35,9 @@ class TransactionTile extends StatelessWidget {
     final isDark = theme.colorScheme.brightness == Brightness.dark;
     final accentColor = _accentColor(type);
 
-    return GestureDetector(
+    return PressableSurface(
       onTap: onTap,
       onLongPress: onLongPress,
-      behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(

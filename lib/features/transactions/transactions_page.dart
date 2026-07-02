@@ -12,6 +12,7 @@ import '../../core/formatters/date_formatter.dart';
 import '../../data/repositories/app_models.dart';
 import '../../shared/components/add_transaction_sheet.dart';
 import '../../shared/widgets/empty_state.dart';
+import '../../shared/widgets/top_toast.dart';
 import 'widgets/period_selector.dart';
 import 'widgets/transaction_filter_chips.dart';
 import 'widgets/transaction_list_section.dart';
@@ -202,8 +203,101 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
       ),
       type: _previewType(detail.type),
       icon: _transactionIcon(detail),
-      onTap: () => _edit(detail),
+      onTap: () => _showDetail(detail, hideBalance),
       onLongPress: () => _confirmDelete(detail),
+    );
+  }
+
+  void _showDetail(TransactionDetail detail, bool hideBalance) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        final title = detail.type == TransactionType.transfer
+            ? '${detail.wallet.name} ke ${detail.transferWallet?.name ?? 'Dompet'}'
+            : detail.category?.name ?? 'Transaksi';
+        final walletLabel = detail.type == TransactionType.transfer
+            ? 'Dari ${detail.wallet.name} ke ${detail.transferWallet?.name ?? 'Dompet'}'
+            : detail.wallet.name;
+        final typeLabel = switch (detail.type) {
+          TransactionType.income => 'Pemasukan',
+          TransactionType.expense => 'Pengeluaran',
+          TransactionType.transfer => 'Transfer',
+        };
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screen,
+              AppSpacing.sm,
+              AppSpacing.screen,
+              AppSpacing.xl,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.headlineSmall),
+                const SizedBox(height: AppSpacing.sm),
+                Text(typeLabel, style: theme.textTheme.bodyMedium),
+                const SizedBox(height: AppSpacing.xxl),
+                Text(
+                  CurrencyFormatter.rupiah(
+                    detail.transaction.amount,
+                    hidden: hideBalance,
+                  ),
+                  style: theme.textTheme.displayMedium?.copyWith(
+                    color: _amountColor(detail.type),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                _DetailRow(
+                  label: 'Tanggal',
+                  value: DateFormatter.dateTimeLabel(detail.transaction.date),
+                ),
+                _DetailRow(label: 'Dompet', value: walletLabel),
+                if (detail.category != null)
+                  _DetailRow(label: 'Kategori', value: detail.category!.name),
+                _DetailRow(
+                  label: 'Catatan',
+                  value: detail.transaction.note?.trim().isNotEmpty ?? false
+                      ? detail.transaction.note!
+                      : 'Tidak ada catatan',
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.tonal(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _edit(detail);
+                        },
+                        child: const Text('Edit'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.expenseRed,
+                          foregroundColor: AppColors.onDark,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _confirmDelete(detail);
+                        },
+                        child: const Text('Hapus'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -242,9 +336,48 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
 
     await ref.read(transactionRepositoryProvider).delete(detail.transaction.id);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Transaksi berhasil dihapus.')),
+    TopToast.show(
+      context,
+      'Transaksi berhasil dihapus.',
+      type: TopToastType.success,
     );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 86,
+            child: Text(label, style: theme.textTheme.labelLarge),
+          ),
+          Expanded(child: Text(value, style: theme.textTheme.bodyLarge)),
+        ],
+      ),
+    );
+  }
+}
+
+Color _amountColor(TransactionType type) {
+  switch (type) {
+    case TransactionType.income:
+      return AppColors.incomeGreen;
+    case TransactionType.expense:
+      return AppColors.expenseRed;
+    case TransactionType.transfer:
+      return AppColors.infoBlue;
   }
 }
 

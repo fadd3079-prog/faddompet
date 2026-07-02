@@ -5,7 +5,6 @@ import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_shadows.dart';
 import '../../app/theme/app_spacing.dart';
-import '../../features/analytics/analytics_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/transactions/transactions_page.dart';
@@ -26,7 +25,6 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _pages = const [
     DashboardPage(),
     TransactionsPage(),
-    AnalyticsPage(),
     WalletsPage(),
     SettingsPage(),
   ];
@@ -57,11 +55,6 @@ class _MainShellState extends State<MainShell> {
         icon: Icons.receipt_long_outlined,
         selectedIcon: Icons.receipt_long_rounded,
         label: 'Transaksi',
-      ),
-      PremiumBottomNavItem(
-        icon: Icons.donut_large_outlined,
-        selectedIcon: Icons.donut_large_rounded,
-        label: 'Analitik',
       ),
       PremiumBottomNavItem(
         icon: Icons.account_balance_wallet_outlined,

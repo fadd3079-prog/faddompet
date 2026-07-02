@@ -12,6 +12,7 @@ import '../../core/enums/transaction_type.dart';
 import '../../core/formatters/currency_formatter.dart';
 import '../../data/local/database/app_database.dart';
 import '../../data/repositories/app_models.dart';
+import '../widgets/top_toast.dart';
 import 'amount_display.dart';
 import 'amount_keypad.dart';
 import 'category_choice_chip.dart';
@@ -198,12 +199,18 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
           );
 
       if (!mounted) return;
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transaksi berhasil disimpan.')),
+      TopToast.show(
+        context,
+        widget.transaction == null
+            ? 'Transaksi berhasil disimpan.'
+            : 'Transaksi berhasil diperbarui.',
+        type: TopToastType.success,
       );
+      Navigator.pop(context);
     } on ArgumentError catch (error) {
       _showNotice(error.message.toString(), _NoticeTone.warning);
+    } catch (_) {
+      _showNotice('Transaksi belum bisa disimpan.', _NoticeTone.warning);
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -212,6 +219,13 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   }
 
   void _showNotice(String message, _NoticeTone tone) {
+    TopToast.show(
+      context,
+      message,
+      type: tone == _NoticeTone.warning
+          ? TopToastType.warning
+          : TopToastType.info,
+    );
     setState(() {
       _noticeMessage = message;
       _noticeTone = tone;
@@ -247,6 +261,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     final isDark = brightness == Brightness.dark;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final visibleCategories = _visibleCategories(categories);
+    final selectableWallets = _selectableWallets(wallets);
+
+    if (selectableWallets.isEmpty) {
+      return const _SheetLoading(message: 'Aktifkan dompet terlebih dahulu');
+    }
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -309,17 +328,26 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                           ),
                           const SizedBox(height: AppSpacing.xxxl),
                           if (_type == TransactionType.transfer)
+                          _DatePicker(
+                            selectedDate: _dateLabel,
+                            onSelected: _selectDate,
+                          ),
+                          const SizedBox(height: AppSpacing.xxxl),
+                          if (_type == TransactionType.transfer)
                             _TransferFields(
-                              wallets: wallets,
+                              wallets: selectableWallets,
                               fromWalletId: _fromWalletId,
                               toWalletId: _toWalletId,
                               onFromSelected: (id) {
                                 setState(() {
                                   _fromWalletId = id;
                                   if (_toWalletId == id) {
-                                    _toWalletId = wallets
+                                    _toWalletId = selectableWallets
                                         .map((item) => item.wallet.id)
-                                        .firstWhere((item) => item != id);
+                                        .firstWhere(
+                                          (item) => item != id,
+                                          orElse: () => id,
+                                        );
                                   }
                                   _noticeMessage = null;
                                 });
@@ -328,9 +356,12 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                                 setState(() {
                                   _toWalletId = id;
                                   if (_fromWalletId == id) {
-                                    _fromWalletId = wallets
+                                    _fromWalletId = selectableWallets
                                         .map((item) => item.wallet.id)
-                                        .firstWhere((item) => item != id);
+                                        .firstWhere(
+                                          (item) => item != id,
+                                          orElse: () => id,
+                                        );
                                   }
                                   _noticeMessage = null;
                                 });
@@ -351,7 +382,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                           if (_type != TransactionType.transfer) ...[
                             const SizedBox(height: AppSpacing.xxxl),
                             _WalletPicker(
-                              wallets: wallets,
+                              wallets: selectableWallets,
                               selectedWalletId: _selectedWalletId,
                               onSelected: (id) {
                                 setState(() {
@@ -362,11 +393,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                             ),
                           ],
                           const SizedBox(height: AppSpacing.xxxl),
-                          _DatePicker(
-                            selectedDate: _dateLabel,
-                            onSelected: _selectDate,
-                          ),
-                          const SizedBox(height: AppSpacing.xxxl),
                           _NoteField(controller: _noteController),
                         ],
                       ),
@@ -375,7 +401,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                       noticeMessage: _noticeMessage,
                       noticeTone: _noticeTone,
                       saving: _saving,
-                      onSubmit: () => _submit(wallets),
+                      onSubmit: () => _submit(selectableWallets),
                     ),
                   ],
                 ),
@@ -392,12 +418,14 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     List<CategoryEntry> categories,
   ) {
     if (wallets.isNotEmpty) {
-      _selectedWalletId ??= wallets.first.wallet.id;
-      _fromWalletId ??= wallets.first.wallet.id;
-      if (wallets.length > 1) {
-        _toWalletId ??= wallets[1].wallet.id;
+      final selectableWallets = _selectableWallets(wallets);
+      if (selectableWallets.isEmpty) return;
+      _selectedWalletId ??= selectableWallets.first.wallet.id;
+      _fromWalletId ??= selectableWallets.first.wallet.id;
+      if (selectableWallets.length > 1) {
+        _toWalletId ??= selectableWallets[1].wallet.id;
       } else {
-        _toWalletId ??= wallets.first.wallet.id;
+        _toWalletId ??= selectableWallets.first.wallet.id;
       }
     }
 
@@ -409,7 +437,23 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   List<CategoryEntry> _visibleCategories(List<CategoryEntry> categories) {
     return categories
         .where(
-          (category) => category.type == _type.value || category.type == 'both',
+          (category) =>
+              !category.isArchived &&
+              (category.type == _type.value || category.type == 'both'),
+        )
+        .toList();
+  }
+
+  List<WalletBalance> _selectableWallets(List<WalletBalance> wallets) {
+    final selectedIds = {
+      if (_selectedWalletId != null) _selectedWalletId,
+      if (_fromWalletId != null) _fromWalletId,
+      if (_toWalletId != null) _toWalletId,
+    };
+    return wallets
+        .where(
+          (wallet) =>
+              !wallet.wallet.isArchived || selectedIds.contains(wallet.wallet.id),
         )
         .toList();
   }

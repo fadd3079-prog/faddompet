@@ -69,13 +69,25 @@ class BudgetRepository {
     required String month,
     required int limitAmount,
   }) async {
+    if (limitAmount <= 0) {
+      throw ArgumentError('Masukkan nominal terlebih dahulu.');
+    }
+    final duplicateCount = await _database.budgetsDao.countDuplicate(
+      month: month,
+      categoryId: categoryId,
+      exceptId: id,
+    );
+    if (duplicateCount > 0) {
+      throw ArgumentError('Budget untuk periode ini sudah ada.');
+    }
     final now = DateTime.now();
+    final existing = id == null ? null : await _database.budgetsDao.getById(id);
     final companion = BudgetEntriesCompanion(
       id: id == null ? const Value.absent() : Value(id),
       categoryId: Value(categoryId),
       month: Value(month),
       limitAmount: Value(limitAmount),
-      createdAt: Value(now),
+      createdAt: Value(existing?.createdAt ?? now),
       updatedAt: Value(now),
     );
 
@@ -88,6 +100,10 @@ class BudgetRepository {
 
   Future<void> delete(int id) async {
     await _database.budgetsDao.deleteById(id);
+  }
+
+  Future<void> resetMonth(String month) async {
+    await _database.budgetsDao.deleteByMonth(month);
   }
 
   List<BudgetProgress> _progress(

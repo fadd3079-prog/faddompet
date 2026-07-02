@@ -22,7 +22,7 @@ class BackupRepository {
       content: const JsonEncoder.withIndent('  ').convert(payload),
       mimeType: 'application/json',
     );
-    await Share.shareXFiles([file], text: 'Backup Faddompet');
+    await Share.shareXFiles([file], text: 'Cadangan FadDompet');
     return name;
   }
 
@@ -66,7 +66,7 @@ class BackupRepository {
       content: csv.encode(rows),
       mimeType: 'text/csv',
     );
-    await Share.shareXFiles([file], text: 'CSV transaksi Faddompet');
+    await Share.shareXFiles([file], text: 'CSV transaksi FadDompet');
     return name;
   }
 
@@ -193,6 +193,7 @@ class BackupRepository {
     'icon_key': entry.iconKey,
     'color_value': entry.colorValue,
     'is_default': entry.isDefault,
+    'is_archived': entry.isArchived,
   };
 
   Map<String, dynamic> _walletToJson(WalletEntry entry) => {
@@ -200,6 +201,7 @@ class BackupRepository {
     'name': entry.name,
     'type': entry.type,
     'initial_balance': entry.initialBalance,
+    'is_archived': entry.isArchived,
   };
 
   Map<String, dynamic> _budgetToJson(BudgetEntry entry) => {
@@ -247,6 +249,7 @@ class BackupRepository {
       iconKey: item['icon_key'] as String? ?? 'category',
       colorValue: item['color_value'] as int? ?? 0xFF6B7280,
       isDefault: Value(item['is_default'] as bool? ?? false),
+      isArchived: Value(item['is_archived'] as bool? ?? false),
       createdAt: now,
       updatedAt: now,
     );
@@ -261,6 +264,7 @@ class BackupRepository {
       name: item['name'] as String,
       type: item['type'] as String,
       initialBalance: Value(item['initial_balance'] as int? ?? 0),
+      isArchived: Value(item['is_archived'] as bool? ?? false),
       createdAt: now,
       updatedAt: now,
     );

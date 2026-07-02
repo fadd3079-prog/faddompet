@@ -6,6 +6,7 @@ import '../../app/theme/app_durations.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_shadows.dart';
 import '../../app/theme/app_spacing.dart';
+import 'pressable_surface.dart';
 
 class PremiumBottomNavItem {
   const PremiumBottomNavItem({
@@ -64,34 +65,35 @@ class PremiumBottomNav extends StatelessWidget {
                 ),
                 boxShadow: AppShadows.nav(brightness),
               ),
-              child: Row(
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  _NavItem(
-                    item: items[0],
-                    selected: currentIndex == 0,
-                    onTap: () => onChanged(0),
-                  ),
-                  _NavItem(
-                    item: items[1],
-                    selected: currentIndex == 1,
-                    onTap: () => onChanged(1),
+                  Row(
+                    children: [
+                      _NavItem(
+                        item: items[0],
+                        selected: currentIndex == 0,
+                        onTap: () => onChanged(0),
+                      ),
+                      _NavItem(
+                        item: items[1],
+                        selected: currentIndex == 1,
+                        onTap: () => onChanged(1),
+                      ),
+                      const SizedBox(width: AppSpacing.huge + AppSpacing.xxl),
+                      _NavItem(
+                        item: items[2],
+                        selected: currentIndex == 2,
+                        onTap: () => onChanged(2),
+                      ),
+                      _NavItem(
+                        item: items[3],
+                        selected: currentIndex == 3,
+                        onTap: () => onChanged(3),
+                      ),
+                    ],
                   ),
                   _QuickAddButton(onPressed: onAddPressed),
-                  _NavItem(
-                    item: items[2],
-                    selected: currentIndex == 2,
-                    onTap: () => onChanged(2),
-                  ),
-                  _NavItem(
-                    item: items[3],
-                    selected: currentIndex == 3,
-                    onTap: () => onChanged(3),
-                  ),
-                  _NavItem(
-                    item: items[4],
-                    selected: currentIndex == 4,
-                    onTap: () => onChanged(4),
-                  ),
                 ],
               ),
             ),
@@ -127,9 +129,8 @@ class _NavItem extends StatelessWidget {
         button: true,
         selected: selected,
         label: item.label,
-        child: GestureDetector(
+        child: PressableSurface(
           onTap: onTap,
-          behavior: HitTestBehavior.opaque,
           child: SizedBox(
             height: double.infinity,
             child: Column(
@@ -215,9 +216,8 @@ class _QuickAddButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Tambah Transaksi',
-      child: GestureDetector(
+      child: PressableSurface(
         onTap: onPressed,
-        behavior: HitTestBehavior.opaque,
         child: Tooltip(
           message: 'Tambah Transaksi',
           child: Container(

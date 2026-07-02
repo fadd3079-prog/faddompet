@@ -14,6 +14,11 @@ class CurrencyFormatter {
       return 'Rp••••';
     }
 
-    return _format.format(amount).replaceAll(',00', '');
+    return _format.format(amount).replaceAll(RegExp(r'\s+'), '');
+  }
+
+  static int parseRupiah(String value) {
+    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+    return int.tryParse(digits) ?? 0;
   }
 }

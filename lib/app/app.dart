@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/onboarding/onboarding_page.dart';
+import '../features/security/app_lock_gate.dart';
 import '../shared/layouts/main_shell.dart';
 import '../shared/widgets/loading_state.dart';
 import 'providers/app_providers.dart';
@@ -18,7 +19,7 @@ class FaddompetApp extends ConsumerWidget {
         .maybeWhen(data: (value) => value, orElse: () => null);
 
     return MaterialApp(
-      title: 'Faddompet',
+      title: 'FadDompet',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
@@ -41,7 +42,7 @@ class FaddompetApp extends ConsumerWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: const _AppGate(),
+      home: const AppLockGate(child: _AppGate()),
     );
   }
 
@@ -78,7 +79,7 @@ class _AppGate extends ConsumerWidget {
           error: (_, _) => const OnboardingPage(),
         );
       },
-      loading: () => const LoadingState(message: 'Menyiapkan Faddompet'),
+      loading: () => const LoadingState(message: 'Menyiapkan FadDompet'),
       error: (_, _) => const LoadingState(message: 'Data belum bisa dimuat'),
     );
   }

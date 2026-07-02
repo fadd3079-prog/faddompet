@@ -9,6 +9,7 @@ import '../../data/repositories/budget_repository.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../data/repositories/dashboard_repository.dart';
 import '../../data/repositories/settings_repository.dart';
+import '../../data/repositories/security_repository.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/wallet_repository.dart';
 
@@ -86,4 +87,12 @@ final analyticsSummaryProvider = StreamProvider<AnalyticsSummary>((ref) {
 
 final backupRepositoryProvider = Provider<BackupRepository>((ref) {
   return BackupRepository(ref.watch(databaseProvider));
+});
+
+final securityRepositoryProvider = Provider<SecurityRepository>((ref) {
+  return SecurityRepository();
+});
+
+final securitySettingsProvider = FutureProvider<SecuritySettings>((ref) {
+  return ref.watch(securityRepositoryProvider).loadSettings();
 });

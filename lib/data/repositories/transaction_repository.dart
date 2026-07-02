@@ -95,6 +95,9 @@ class TransactionRepository {
     }
 
     final now = DateTime.now();
+    final existing = id == null
+        ? null
+        : await _database.transactionsDao.getById(id);
     final companion = TransactionEntriesCompanion(
       id: id == null ? const Value.absent() : Value(id),
       type: Value(type.value),
@@ -106,7 +109,7 @@ class TransactionRepository {
       ),
       date: Value(date),
       note: Value(note?.trim().isEmpty ?? true ? null : note!.trim()),
-      createdAt: Value(now),
+      createdAt: Value(existing?.createdAt ?? now),
       updatedAt: Value(now),
     );
 

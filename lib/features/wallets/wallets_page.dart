@@ -9,8 +9,11 @@ import '../../app/theme/app_shadows.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../core/enums/wallet_type.dart';
 import '../../core/formatters/currency_formatter.dart';
+import '../../core/formatters/rupiah_input_formatter.dart';
 import '../../data/local/database/app_database.dart';
 import '../../data/repositories/app_models.dart';
+import '../../shared/widgets/pressable_surface.dart';
+import '../../shared/widgets/top_toast.dart';
 
 class WalletsPage extends ConsumerWidget {
   const WalletsPage({super.key});
@@ -58,7 +61,8 @@ class WalletsPage extends ConsumerWidget {
               _WalletCard(
                 wallet: wallet,
                 hideBalance: hideBalance,
-                onTap: () => _showWalletForm(context, ref, wallet.wallet),
+                onTap: () =>
+                    _showWalletDetail(context, ref, wallet, hideBalance),
                 onLongPress: () => _deleteWallet(context, ref, wallet.wallet),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -83,20 +87,130 @@ class WalletsPage extends ConsumerWidget {
     if (result == null) return;
 
     final repository = ref.read(walletRepositoryProvider);
-    if (wallet == null) {
-      await repository.addWallet(
-        name: result.name,
-        type: result.type.value,
-        initialBalance: result.initialBalance,
+    try {
+      if (wallet == null) {
+        await repository.addWallet(
+          name: result.name,
+          type: result.type.value,
+          initialBalance: result.initialBalance,
+        );
+      } else {
+        await repository.updateWallet(
+          wallet: wallet,
+          name: result.name,
+          type: result.type.value,
+          initialBalance: result.initialBalance,
+        );
+      }
+      if (!context.mounted) return;
+      TopToast.show(
+        context,
+        wallet == null ? 'Dompet berhasil disimpan.' : 'Dompet berhasil diperbarui.',
+        type: TopToastType.success,
       );
-    } else {
-      await repository.updateWallet(
-        wallet: wallet,
-        name: result.name,
-        type: result.type.value,
-        initialBalance: result.initialBalance,
-      );
+    } on ArgumentError catch (error) {
+      if (!context.mounted) return;
+      TopToast.show(context, error.message.toString(), type: TopToastType.warning);
     }
+  }
+
+  void _showWalletDetail(
+    BuildContext context,
+    WidgetRef ref,
+    WalletBalance wallet,
+    bool hideBalance,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        final type = WalletType.fromValue(wallet.wallet.type);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screen,
+              AppSpacing.sm,
+              AppSpacing.screen,
+              AppSpacing.xl,
+            ),
+            child: FutureBuilder<int>(
+              future: ref
+                  .read(walletRepositoryProvider)
+                  .transactionCount(wallet.wallet.id),
+              builder: (context, snapshot) {
+                final count = snapshot.data ?? 0;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(wallet.wallet.name, style: theme.textTheme.headlineSmall),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      wallet.wallet.isArchived ? '${type.label} tidak aktif' : type.label,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xxl),
+                    Text(
+                      CurrencyFormatter.rupiah(wallet.balance, hidden: hideBalance),
+                      style: theme.textTheme.displayMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xxl),
+                    _WalletInfoRow(label: 'Transaksi', value: '$count transaksi'),
+                    _WalletInfoRow(
+                      label: 'Saldo awal',
+                      value: CurrencyFormatter.rupiah(wallet.wallet.initialBalance),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FilledButton.tonal(
+                            onPressed: () {
+                              Navigator.pop(sheetContext);
+                              _showWalletForm(context, ref, wallet.wallet);
+                            },
+                            child: const Text('Edit'),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: wallet.wallet.isArchived
+                                  ? AppColors.primary
+                                  : AppColors.expenseRed,
+                              foregroundColor: AppColors.onDark,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(sheetContext);
+                              if (wallet.wallet.isArchived) {
+                                _archiveWallet(context, ref, wallet.wallet, false);
+                              } else if (count > 0) {
+                                _archiveWallet(context, ref, wallet.wallet, true);
+                              } else {
+                                _deleteWallet(context, ref, wallet.wallet);
+                              }
+                            },
+                            child: Text(
+                              wallet.wallet.isArchived
+                                  ? 'Aktifkan'
+                                  : count > 0
+                                  ? 'Nonaktifkan'
+                                  : 'Hapus',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _deleteWallet(
@@ -129,8 +243,25 @@ class WalletsPage extends ConsumerWidget {
         .read(walletRepositoryProvider)
         .deleteWallet(wallet.id);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message ?? 'Dompet berhasil dihapus.')),
+    TopToast.show(
+      context,
+      message ?? 'Dompet berhasil dihapus.',
+      type: message == null ? TopToastType.success : TopToastType.warning,
+    );
+  }
+
+  Future<void> _archiveWallet(
+    BuildContext context,
+    WidgetRef ref,
+    WalletEntry wallet,
+    bool archived,
+  ) async {
+    await ref.read(walletRepositoryProvider).setArchived(wallet, archived);
+    if (!context.mounted) return;
+    TopToast.show(
+      context,
+      archived ? 'Dompet dinonaktifkan.' : 'Dompet diaktifkan kembali.',
+      type: TopToastType.success,
     );
   }
 }
@@ -156,10 +287,9 @@ class _WalletCard extends StatelessWidget {
     final type = WalletType.fromValue(wallet.wallet.type);
     final accentColor = _accent(type);
 
-    return GestureDetector(
+    return PressableSurface(
       onTap: onTap,
       onLongPress: onLongPress,
-      behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
@@ -186,7 +316,23 @@ class _WalletCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(wallet.wallet.name, style: theme.textTheme.titleMedium),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          wallet.wallet.name,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ),
+                      if (wallet.wallet.isArchived)
+                        Text(
+                          'Nonaktif',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: AppColors.warningOrange,
+                          ),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(type.label, style: theme.textTheme.labelSmall),
                 ],
@@ -200,6 +346,28 @@ class _WalletCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _WalletInfoRow extends StatelessWidget {
+  const _WalletInfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Row(
+        children: [
+          SizedBox(width: 92, child: Text(label, style: theme.textTheme.labelLarge)),
+          Expanded(child: Text(value, style: theme.textTheme.bodyLarge)),
+        ],
       ),
     );
   }
@@ -227,7 +395,7 @@ class _WalletFormDialogState extends State<_WalletFormDialog> {
     _balanceController = TextEditingController(
       text: wallet?.initialBalance == null || wallet!.initialBalance == 0
           ? ''
-          : wallet.initialBalance.toString(),
+          : CurrencyFormatter.rupiah(wallet.initialBalance),
     );
     _type = WalletType.fromValue(wallet?.type ?? WalletType.cash.value);
   }
@@ -248,7 +416,11 @@ class _WalletFormDialogState extends State<_WalletFormDialog> {
         children: [
           TextField(
             controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Nama dompet'),
+            decoration: const InputDecoration(
+              labelText: 'Nama dompet',
+              hintText: 'Contoh: Tunai',
+              helperText: 'Gunakan nama yang mudah kamu kenali.',
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Wrap(
@@ -267,8 +439,14 @@ class _WalletFormDialogState extends State<_WalletFormDialog> {
           TextField(
             controller: _balanceController,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(labelText: 'Saldo awal'),
+            inputFormatters: const [RupiahInputFormatter()],
+            decoration: InputDecoration(
+              labelText: 'Saldo awal',
+              hintText: 'Rp0',
+              helperText: widget.wallet == null
+                  ? 'Opsional, boleh dikosongkan.'
+                  : 'Mengubah saldo awal akan memengaruhi saldo dompet.',
+            ),
           ),
         ],
       ),
@@ -286,7 +464,9 @@ class _WalletFormDialogState extends State<_WalletFormDialog> {
               _WalletFormResult(
                 name: name,
                 type: _type,
-                initialBalance: int.tryParse(_balanceController.text) ?? 0,
+                initialBalance: CurrencyFormatter.parseRupiah(
+                  _balanceController.text,
+                ),
               ),
             );
           },

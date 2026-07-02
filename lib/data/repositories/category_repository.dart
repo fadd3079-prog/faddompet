@@ -22,12 +22,27 @@ class CategoryRepository {
     required String groupName,
     required int colorValue,
   }) async {
+    final trimmedName = name.trim();
+    final trimmedGroup = groupName.trim().isEmpty
+        ? 'Lainnya'
+        : groupName.trim();
+    if (trimmedName.isEmpty) {
+      throw ArgumentError('Nama kategori belum diisi.');
+    }
+    final duplicateCount = await _database.categoriesDao.countDuplicate(
+      name: trimmedName,
+      type: type.value,
+      groupName: trimmedGroup,
+    );
+    if (duplicateCount > 0) {
+      throw ArgumentError('Kategori sudah ada di grup ini.');
+    }
     final now = DateTime.now();
     await _database.categoriesDao.add(
       CategoryEntriesCompanion.insert(
-        name: name.trim(),
+        name: trimmedName,
         type: type.value,
-        groupName: groupName.trim().isEmpty ? 'Lainnya' : groupName.trim(),
+        groupName: trimmedGroup,
         iconKey: 'category',
         colorValue: colorValue,
         isDefault: const Value(false),
@@ -37,24 +52,60 @@ class CategoryRepository {
     );
   }
 
-  Future<void> updateCategory(CategoryEntry category, String name) async {
+  Future<void> updateCategory({
+    required CategoryEntry category,
+    required String name,
+    required CategoryType type,
+    required String groupName,
+    required int colorValue,
+  }) async {
+    final trimmedName = name.trim();
+    final trimmedGroup = groupName.trim().isEmpty
+        ? 'Lainnya'
+        : groupName.trim();
+    if (trimmedName.isEmpty) {
+      throw ArgumentError('Nama kategori belum diisi.');
+    }
+    final duplicateCount = await _database.categoriesDao.countDuplicate(
+      name: trimmedName,
+      type: type.value,
+      groupName: trimmedGroup,
+      exceptId: category.id,
+    );
+    if (duplicateCount > 0) {
+      throw ArgumentError('Kategori sudah ada di grup ini.');
+    }
     await _database.categoriesDao.updateEntry(
       category
-          .copyWith(name: name.trim(), updatedAt: DateTime.now())
+          .copyWith(
+            name: trimmedName,
+            type: type.value,
+            groupName: trimmedGroup,
+            colorValue: colorValue,
+            updatedAt: DateTime.now(),
+          )
           .toCompanion(true),
     );
   }
 
-  Future<String?> safeDeleteMessage(CategoryEntry category) async {
-    if (category.isDefault) {
-      return 'Kategori bawaan tidak bisa dihapus.';
-    }
-
+  Future<String?> deleteCategory(CategoryEntry category) async {
     final count = await _database.transactionsDao.countByCategory(category.id);
     if (count > 0) {
-      return 'Kategori ini sudah dipakai di transaksi.';
+      return 'Kategori ini masih digunakan oleh transaksi.';
+    }
+    if (category.isDefault) {
+      return 'Kategori bawaan sebaiknya dinonaktifkan saja.';
     }
 
+    await _database.categoriesDao.deleteById(category.id);
     return null;
+  }
+
+  Future<void> setArchived(CategoryEntry category, bool value) async {
+    await _database.categoriesDao.updateEntry(
+      category
+          .copyWith(isArchived: value, updatedAt: DateTime.now())
+          .toCompanion(true),
+    );
   }
 }

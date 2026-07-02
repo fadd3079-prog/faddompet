@@ -67,10 +67,20 @@ class WalletRepository {
     required String type,
     int initialBalance = 0,
   }) async {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      throw ArgumentError('Nama dompet belum diisi.');
+    }
+    final duplicateCount = await _database.walletsDao.countDuplicate(
+      name: trimmedName,
+    );
+    if (duplicateCount > 0) {
+      throw ArgumentError('Nama dompet sudah digunakan.');
+    }
     final now = DateTime.now();
     await _database.walletsDao.add(
       WalletEntriesCompanion.insert(
-        name: name.trim(),
+        name: trimmedName,
         type: type,
         initialBalance: Value(initialBalance),
         createdAt: now,
@@ -85,10 +95,21 @@ class WalletRepository {
     required String type,
     required int initialBalance,
   }) async {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      throw ArgumentError('Nama dompet belum diisi.');
+    }
+    final duplicateCount = await _database.walletsDao.countDuplicate(
+      name: trimmedName,
+      exceptId: wallet.id,
+    );
+    if (duplicateCount > 0) {
+      throw ArgumentError('Nama dompet sudah digunakan.');
+    }
     await _database.walletsDao.updateEntry(
       wallet
           .copyWith(
-            name: name.trim(),
+            name: trimmedName,
             type: type,
             initialBalance: initialBalance,
             updatedAt: DateTime.now(),
@@ -100,10 +121,22 @@ class WalletRepository {
   Future<String?> deleteWallet(int walletId) async {
     final count = await _database.transactionsDao.countByWallet(walletId);
     if (count > 0) {
-      return 'Dompet ini sudah dipakai di transaksi.';
+      return 'Dompet ini masih memiliki transaksi.';
     }
 
     await _database.walletsDao.deleteById(walletId);
     return null;
+  }
+
+  Future<int> transactionCount(int walletId) {
+    return _database.transactionsDao.countByWallet(walletId);
+  }
+
+  Future<void> setArchived(WalletEntry wallet, bool value) async {
+    await _database.walletsDao.updateEntry(
+      wallet
+          .copyWith(isArchived: value, updatedAt: DateTime.now())
+          .toCompanion(true),
+    );
   }
 }

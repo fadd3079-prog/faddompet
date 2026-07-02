@@ -34,6 +34,7 @@ class CategoryEntries extends Table {
   TextColumn get iconKey => text().withLength(min: 1, max: 80)();
   IntColumn get colorValue => integer()();
   BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
+  BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 }
@@ -47,6 +48,7 @@ class WalletEntries extends Table {
   TextColumn get name => text().withLength(min: 1, max: 80)();
   TextColumn get type => text().withLength(min: 1, max: 24)();
   IntColumn get initialBalance => integer().withDefault(const Constant(0))();
+  BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 }
@@ -163,6 +165,11 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  Future<TransactionEntry?> getById(int id) {
+    return (select(transactionEntries)..where((table) => table.id.equals(id)))
+        .getSingleOrNull();
+  }
+
   Future<int> add(TransactionEntriesCompanion entry) {
     return into(transactionEntries).insert(entry);
   }
@@ -213,7 +220,9 @@ class CategoriesDao extends DatabaseAccessor<AppDatabase>
   Future<List<CategoryEntry>> getByType(String type) {
     return (select(categoryEntries)
           ..where(
-            (table) => table.type.equals(type) | table.type.equals('both'),
+            (table) =>
+                (table.type.equals(type) | table.type.equals('both')) &
+                table.isArchived.equals(false),
           )
           ..orderBy([
             (table) => OrderingTerm(expression: table.groupName),
@@ -229,6 +238,30 @@ class CategoriesDao extends DatabaseAccessor<AppDatabase>
   Future<void> updateEntry(CategoryEntriesCompanion entry) {
     return update(categoryEntries).replace(entry);
   }
+
+  Future<int> deleteById(int id) {
+    return (delete(categoryEntries)..where((table) => table.id.equals(id)))
+        .go();
+  }
+
+  Future<int> countDuplicate({
+    required String name,
+    required String type,
+    required String groupName,
+    int? exceptId,
+  }) {
+    final query = select(categoryEntries)
+      ..where(
+        (table) =>
+            table.name.lower().equals(name.toLowerCase()) &
+            table.type.equals(type) &
+            table.groupName.lower().equals(groupName.toLowerCase()),
+      );
+    if (exceptId != null) {
+      query.where((table) => table.id.equals(exceptId).not());
+    }
+    return query.get().then((value) => value.length);
+  }
 }
 
 @DriftAccessor(tables: [WalletEntries])
@@ -242,6 +275,15 @@ class WalletsDao extends DatabaseAccessor<AppDatabase> with _$WalletsDaoMixin {
   }
 
   Future<List<WalletEntry>> getAll() => select(walletEntries).get();
+
+  Future<int> countDuplicate({required String name, int? exceptId}) {
+    final query = select(walletEntries)
+      ..where((table) => table.name.lower().equals(name.toLowerCase()));
+    if (exceptId != null) {
+      query.where((table) => table.id.equals(exceptId).not());
+    }
+    return query.get().then((value) => value.length);
+  }
 
   Future<int> add(WalletEntriesCompanion entry) {
     return into(walletEntries).insert(entry);
@@ -270,6 +312,29 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase> with _$BudgetsDaoMixin {
 
   Future<List<BudgetEntry>> getAll() => select(budgetEntries).get();
 
+  Future<BudgetEntry?> getById(int id) {
+    return (select(budgetEntries)..where((table) => table.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<int> countDuplicate({
+    required String month,
+    required int? categoryId,
+    int? exceptId,
+  }) {
+    final query = select(budgetEntries)
+      ..where((table) {
+        final categoryExpression = categoryId == null
+            ? table.categoryId.isNull()
+            : table.categoryId.equals(categoryId);
+        return table.month.equals(month) & categoryExpression;
+      });
+    if (exceptId != null) {
+      query.where((table) => table.id.equals(exceptId).not());
+    }
+    return query.get().then((value) => value.length);
+  }
+
   Future<int> add(BudgetEntriesCompanion entry) {
     return into(budgetEntries).insert(entry);
   }
@@ -280,6 +345,11 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase> with _$BudgetsDaoMixin {
 
   Future<int> deleteById(int id) {
     return (delete(budgetEntries)..where((table) => table.id.equals(id))).go();
+  }
+
+  Future<int> deleteByMonth(String month) {
+    return (delete(budgetEntries)..where((table) => table.month.equals(month)))
+        .go();
   }
 }
 
@@ -351,5 +421,20 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.defaults() : super(driftDatabase(name: 'faddompet'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onUpgrade: (m, from, to) async {
+        if (from < 2) {
+          await m.addColumn(walletEntries, walletEntries.isArchived);
+          await m.addColumn(categoryEntries, categoryEntries.isArchived);
+        }
+      },
+      beforeOpen: (details) async {
+        await customStatement('PRAGMA foreign_keys = ON');
+      },
+    );
+  }
 }

@@ -16,10 +16,10 @@ class AppSpacing {
   static const double webMaxWidth = 430;
   static const double compactControlWidth = 320;
   static const double webFrameMargin = 24;
-  static const double navHeight = 74;
-  static const double navBottomInset = 12;
-  static const double contentBottomInset = 128;
-  static const double iconTile = 44;
+  static const double navHeight = 82;
+  static const double navBottomInset = 14;
+  static const double contentBottomInset = 146;
+  static const double iconTile = 48;
   static const double iconTileSmall = 40;
   static const double metricDot = 8;
   static const double transactionAmountMaxWidth = 132;
