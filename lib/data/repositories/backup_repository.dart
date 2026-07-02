@@ -71,6 +71,12 @@ class BackupRepository {
   }
 
   Future<void> importJson() async {
+    final preview = await pickImportPreview();
+    if (preview == null) return;
+    await restoreImport(preview);
+  }
+
+  Future<BackupImportPreview?> pickImportPreview() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
@@ -78,18 +84,24 @@ class BackupRepository {
     );
     final bytes = result?.files.single.bytes;
     if (bytes == null) {
-      return;
+      return null;
     }
 
     final raw = utf8.decode(bytes);
-    final decoded = jsonDecode(raw);
-    if (decoded is! Map<String, dynamic> || decoded['version'] != 1) {
-      throw FormatException('File backup tidak valid.');
-    }
+    final payload = _decodeAndValidate(raw);
+    return BackupImportPreview(
+      payload: payload,
+      transactions: _requiredList(payload, 'transactions').length,
+      wallets: _requiredList(payload, 'wallets').length,
+      categories: _requiredList(payload, 'categories').length,
+      budgets: _requiredList(payload, 'budgets').length,
+    );
+  }
 
+  Future<void> restoreImport(BackupImportPreview preview) async {
     await _database.transaction(() async {
       await _database.backupDao.clearUserData();
-      await _restore(decoded);
+      await _restore(preview.payload);
     });
   }
 
@@ -136,10 +148,10 @@ class BackupRepository {
 
   Future<void> _restore(Map<String, dynamic> payload) async {
     final now = DateTime.now();
-    final wallets = _list(payload['wallets']);
-    final categories = _list(payload['categories']);
-    final transactions = _list(payload['transactions']);
-    final budgets = _list(payload['budgets']);
+    final wallets = _requiredList(payload, 'wallets');
+    final categories = _requiredList(payload, 'categories');
+    final transactions = _requiredList(payload, 'transactions');
+    final budgets = _requiredList(payload, 'budgets');
     final settings = payload['app_settings'];
 
     if (wallets.isEmpty || categories.isEmpty) {
@@ -168,12 +180,165 @@ class BackupRepository {
     );
   }
 
-  List<Map<String, dynamic>> _list(Object? value) {
-    if (value is! List) return const [];
-    return [
-      for (final item in value)
-        if (item is Map<String, dynamic>) item,
-    ];
+  Map<String, dynamic> _decodeAndValidate(String raw) {
+    final decoded = _map(jsonDecode(raw));
+    if (decoded['version'] != 1) {
+      throw FormatException('File cadangan tidak valid.');
+    }
+
+    final wallets = _requiredList(decoded, 'wallets');
+    final categories = _requiredList(decoded, 'categories');
+    final transactions = _requiredList(decoded, 'transactions');
+    final budgets = _requiredList(decoded, 'budgets');
+    final settings = decoded['app_settings'];
+
+    if (wallets.isEmpty || categories.isEmpty) {
+      throw FormatException('File cadangan tidak valid.');
+    }
+
+    final walletIds = _validateWallets(wallets);
+    final categoryTypes = _validateCategories(categories);
+    _validateTransactions(transactions, walletIds, categoryTypes);
+    _validateBudgets(budgets, categoryTypes.keys.toSet());
+    if (settings != null) _validateSettings(_map(settings));
+
+    return decoded;
+  }
+
+  List<Map<String, dynamic>> _requiredList(
+    Map<String, dynamic> payload,
+    String key,
+  ) {
+    final value = payload[key];
+    if (value is! List) throw FormatException('File cadangan tidak valid.');
+    return [for (final item in value) _map(item)];
+  }
+
+  Map<String, dynamic> _map(Object? value) {
+    if (value is! Map) throw FormatException('File cadangan tidak valid.');
+    final mapped = {
+      for (final entry in value.entries)
+        if (entry.key is String) entry.key as String: entry.value,
+    };
+    if (mapped.length != value.length) {
+      throw FormatException('File cadangan tidak valid.');
+    }
+    return mapped;
+  }
+
+  Set<int> _validateWallets(List<Map<String, dynamic>> wallets) {
+    final ids = <int>{};
+    const validTypes = {'cash', 'ewallet', 'bank', 'savings'};
+    for (final item in wallets) {
+      final id = _requiredId(item, 'id');
+      if (!ids.add(id)) throw FormatException('File cadangan tidak valid.');
+      _requiredString(item, 'name');
+      _requiredString(item, 'type', allowed: validTypes);
+      _optionalInt(item, 'initial_balance');
+      _optionalBool(item, 'is_archived');
+    }
+    return ids;
+  }
+
+  Map<int, String> _validateCategories(List<Map<String, dynamic>> categories) {
+    final values = <int, String>{};
+    const validTypes = {'income', 'expense', 'both'};
+    for (final item in categories) {
+      final id = _requiredId(item, 'id');
+      if (values.containsKey(id)) {
+        throw FormatException('File cadangan tidak valid.');
+      }
+      _requiredString(item, 'name');
+      final type = _requiredString(item, 'type', allowed: validTypes);
+      _requiredString(item, 'group_name');
+      _optionalString(item, 'icon_key');
+      _requiredInt(item, 'color_value');
+      _optionalBool(item, 'is_default');
+      _optionalBool(item, 'is_archived');
+      values[id] = type;
+    }
+    return values;
+  }
+
+  void _validateTransactions(
+    List<Map<String, dynamic>> transactions,
+    Set<int> walletIds,
+    Map<int, String> categoryTypes,
+  ) {
+    final ids = <int>{};
+    const validTypes = {'income', 'expense', 'transfer'};
+    for (final item in transactions) {
+      final id = _requiredId(item, 'id');
+      if (!ids.add(id)) throw FormatException('File cadangan tidak valid.');
+      final type = _requiredString(item, 'type', allowed: validTypes);
+      final amount = _requiredInt(item, 'amount');
+      if (amount <= 0) throw FormatException('File cadangan tidak valid.');
+      final walletId = _requiredId(item, 'wallet_id');
+      if (!walletIds.contains(walletId)) {
+        throw FormatException('File cadangan tidak valid.');
+      }
+      final categoryId = _optionalId(item, 'category_id');
+      final transferWalletId = _optionalId(item, 'transfer_wallet_id');
+      if (categoryId != null && !categoryTypes.containsKey(categoryId)) {
+        throw FormatException('File cadangan tidak valid.');
+      }
+      if (type == 'transfer') {
+        if (transferWalletId == null ||
+            !walletIds.contains(transferWalletId) ||
+            transferWalletId == walletId) {
+          throw FormatException('File cadangan tidak valid.');
+        }
+      } else {
+        if (categoryId == null) {
+          throw FormatException('File cadangan tidak valid.');
+        }
+        if (transferWalletId != null && !walletIds.contains(transferWalletId)) {
+          throw FormatException('File cadangan tidak valid.');
+        }
+        final categoryType = categoryTypes[categoryId]!;
+        if (categoryType != type && categoryType != 'both') {
+          throw FormatException('File cadangan tidak valid.');
+        }
+      }
+      _requiredDate(item, 'date');
+      _optionalString(item, 'note');
+    }
+  }
+
+  void _validateBudgets(
+    List<Map<String, dynamic>> budgets,
+    Set<int> categoryIds,
+  ) {
+    final ids = <int>{};
+    final keys = <String>{};
+    for (final item in budgets) {
+      final id = _requiredId(item, 'id');
+      if (!ids.add(id)) throw FormatException('File cadangan tidak valid.');
+      final categoryId = _optionalId(item, 'category_id');
+      if (categoryId != null && !categoryIds.contains(categoryId)) {
+        throw FormatException('File cadangan tidak valid.');
+      }
+      final month = _requiredString(item, 'month');
+      if (!RegExp(r'^\d{4}-\d{2}$').hasMatch(month)) {
+        throw FormatException('File cadangan tidak valid.');
+      }
+      final limit = _requiredInt(item, 'limit_amount');
+      if (limit <= 0) throw FormatException('File cadangan tidak valid.');
+      final key = '$month:${categoryId ?? 'total'}';
+      if (!keys.add(key)) throw FormatException('File cadangan tidak valid.');
+    }
+  }
+
+  void _validateSettings(Map<String, dynamic> item) {
+    _optionalString(item, 'user_name');
+    _optionalString(item, 'currency');
+    _optionalString(
+      item,
+      'theme_mode',
+      allowed: const {'system', 'light', 'dark'},
+    );
+    _optionalBool(item, 'hide_balance');
+    _optionalBool(item, 'onboarding_completed');
   }
 
   Map<String, dynamic> _transactionToJson(TransactionEntry entry) => {
@@ -226,14 +391,14 @@ class BackupRepository {
     DateTime now,
   ) {
     return TransactionEntriesCompanion.insert(
-      id: Value(item['id'] as int? ?? 0),
-      type: item['type'] as String,
-      amount: item['amount'] as int,
-      walletId: item['wallet_id'] as int,
-      categoryId: Value(item['category_id'] as int?),
-      transferWalletId: Value(item['transfer_wallet_id'] as int?),
-      date: DateTime.tryParse(item['date'] as String? ?? '') ?? now,
-      note: Value(item['note'] as String?),
+      id: Value(_requiredId(item, 'id')),
+      type: _requiredString(item, 'type'),
+      amount: _requiredInt(item, 'amount'),
+      walletId: _requiredId(item, 'wallet_id'),
+      categoryId: Value(_optionalId(item, 'category_id')),
+      transferWalletId: Value(_optionalId(item, 'transfer_wallet_id')),
+      date: _requiredDate(item, 'date'),
+      note: Value(_optionalString(item, 'note')),
       createdAt: now,
       updatedAt: now,
     );
@@ -244,14 +409,14 @@ class BackupRepository {
     DateTime now,
   ) {
     return CategoryEntriesCompanion.insert(
-      id: Value(item['id'] as int? ?? 0),
-      name: item['name'] as String,
-      type: item['type'] as String,
-      groupName: item['group_name'] as String,
-      iconKey: item['icon_key'] as String? ?? 'category',
-      colorValue: item['color_value'] as int? ?? 0xFF6B7280,
-      isDefault: Value(item['is_default'] as bool? ?? false),
-      isArchived: Value(item['is_archived'] as bool? ?? false),
+      id: Value(_requiredId(item, 'id')),
+      name: _requiredString(item, 'name'),
+      type: _requiredString(item, 'type'),
+      groupName: _requiredString(item, 'group_name'),
+      iconKey: _optionalString(item, 'icon_key') ?? 'category',
+      colorValue: _requiredInt(item, 'color_value'),
+      isDefault: Value(_optionalBool(item, 'is_default') ?? false),
+      isArchived: Value(_optionalBool(item, 'is_archived') ?? false),
       createdAt: now,
       updatedAt: now,
     );
@@ -262,11 +427,11 @@ class BackupRepository {
     DateTime now,
   ) {
     return WalletEntriesCompanion.insert(
-      id: Value(item['id'] as int? ?? 0),
-      name: item['name'] as String,
-      type: item['type'] as String,
-      initialBalance: Value(item['initial_balance'] as int? ?? 0),
-      isArchived: Value(item['is_archived'] as bool? ?? false),
+      id: Value(_requiredId(item, 'id')),
+      name: _requiredString(item, 'name'),
+      type: _requiredString(item, 'type'),
+      initialBalance: Value(_optionalInt(item, 'initial_balance') ?? 0),
+      isArchived: Value(_optionalBool(item, 'is_archived') ?? false),
       createdAt: now,
       updatedAt: now,
     );
@@ -277,10 +442,10 @@ class BackupRepository {
     DateTime now,
   ) {
     return BudgetEntriesCompanion.insert(
-      id: Value(item['id'] as int? ?? 0),
-      categoryId: Value(item['category_id'] as int?),
-      month: item['month'] as String,
-      limitAmount: item['limit_amount'] as int,
+      id: Value(_requiredId(item, 'id')),
+      categoryId: Value(_optionalId(item, 'category_id')),
+      month: _requiredString(item, 'month'),
+      limitAmount: _requiredInt(item, 'limit_amount'),
       createdAt: now,
       updatedAt: now,
     );
@@ -291,13 +456,101 @@ class BackupRepository {
     DateTime now,
   ) {
     return AppSettingEntriesCompanion.insert(
-      userName: Value(item['user_name'] as String?),
-      currency: Value(item['currency'] as String? ?? 'IDR'),
-      themeMode: Value(item['theme_mode'] as String? ?? 'system'),
-      hideBalance: Value(item['hide_balance'] as bool? ?? false),
-      onboardingCompleted: Value(item['onboarding_completed'] as bool? ?? true),
+      userName: Value(_optionalString(item, 'user_name')),
+      currency: Value(_optionalString(item, 'currency') ?? 'IDR'),
+      themeMode: Value(_optionalString(item, 'theme_mode') ?? 'system'),
+      hideBalance: Value(_optionalBool(item, 'hide_balance') ?? false),
+      onboardingCompleted: Value(
+        _optionalBool(item, 'onboarding_completed') ?? true,
+      ),
       createdAt: now,
       updatedAt: now,
     );
   }
+
+  int _requiredId(Map<String, dynamic> item, String key) {
+    final value = _requiredInt(item, key);
+    if (value <= 0) throw FormatException('File cadangan tidak valid.');
+    return value;
+  }
+
+  int _requiredInt(Map<String, dynamic> item, String key) {
+    final value = item[key];
+    if (value is! int) throw FormatException('File cadangan tidak valid.');
+    return value;
+  }
+
+  int? _optionalInt(Map<String, dynamic> item, String key) {
+    final value = item[key];
+    if (value == null) return null;
+    if (value is! int) throw FormatException('File cadangan tidak valid.');
+    return value;
+  }
+
+  int? _optionalId(Map<String, dynamic> item, String key) {
+    final value = _optionalInt(item, key);
+    if (value == null) return null;
+    if (value <= 0) throw FormatException('File cadangan tidak valid.');
+    return value;
+  }
+
+  String _requiredString(
+    Map<String, dynamic> item,
+    String key, {
+    Set<String>? allowed,
+  }) {
+    final value = item[key];
+    if (value is! String || value.trim().isEmpty) {
+      throw FormatException('File cadangan tidak valid.');
+    }
+    if (allowed != null && !allowed.contains(value)) {
+      throw FormatException('File cadangan tidak valid.');
+    }
+    return value;
+  }
+
+  String? _optionalString(
+    Map<String, dynamic> item,
+    String key, {
+    Set<String>? allowed,
+  }) {
+    final value = item[key];
+    if (value == null) return null;
+    if (value is! String) throw FormatException('File cadangan tidak valid.');
+    if (allowed != null && !allowed.contains(value)) {
+      throw FormatException('File cadangan tidak valid.');
+    }
+    return value;
+  }
+
+  bool? _optionalBool(Map<String, dynamic> item, String key) {
+    final value = item[key];
+    if (value == null) return null;
+    if (value is! bool) throw FormatException('File cadangan tidak valid.');
+    return value;
+  }
+
+  DateTime _requiredDate(Map<String, dynamic> item, String key) {
+    final value = item[key];
+    if (value is! String) throw FormatException('File cadangan tidak valid.');
+    final date = DateTime.tryParse(value);
+    if (date == null) throw FormatException('File cadangan tidak valid.');
+    return date;
+  }
+}
+
+class BackupImportPreview {
+  const BackupImportPreview({
+    required this.payload,
+    required this.transactions,
+    required this.wallets,
+    required this.categories,
+    required this.budgets,
+  });
+
+  final Map<String, dynamic> payload;
+  final int transactions;
+  final int wallets;
+  final int categories;
+  final int budgets;
 }

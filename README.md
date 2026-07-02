@@ -16,7 +16,8 @@ FadDompet v1.1 - Offline personal money management app for Android
 - Riwayat transaksi dengan pencarian dan filter
 - Analitik dan budget bulanan
 - Kategori pemasukan dan pengeluaran yang bisa dikelola
-- Ekspor cadangan JSON, impor JSON, dan ekspor CSV
+- Cadangkan dan pulihkan data saat ganti HP
+- Ekspor laporan transaksi CSV
 - Reset data dengan konfirmasi aman
 - PIN lock, biometrik opsional, dan hide balance
 - UI Android premium yang terinspirasi iOS

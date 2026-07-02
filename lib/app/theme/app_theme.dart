@@ -48,6 +48,13 @@ class AppTheme {
         color: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.card),
       ),
+      dialogTheme: DialogThemeData(
+        elevation: 0,
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+        ),
+      ),
       bottomSheetTheme: BottomSheetThemeData(
         elevation: 0,
         modalElevation: 0,
@@ -107,6 +114,27 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.surfaceSoft,
+        selectedColor: AppColors.surfaceMint,
+        disabledColor: AppColors.surfaceSoft.withValues(alpha: 0.56),
+        checkmarkColor: AppColors.primary,
+        labelPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        side: const BorderSide(color: AppColors.borderSubtle),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        labelStyle: textTheme.labelLarge?.copyWith(
+          color: AppColors.textPrimary,
+        ),
+        secondaryLabelStyle: textTheme.labelLarge?.copyWith(
+          color: AppColors.primaryDark,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -207,6 +235,13 @@ class AppTheme {
         color: AppColors.darkSurface,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.card),
       ),
+      dialogTheme: DialogThemeData(
+        elevation: 0,
+        backgroundColor: AppColors.darkSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+        ),
+      ),
       bottomSheetTheme: BottomSheetThemeData(
         elevation: 0,
         modalElevation: 0,
@@ -266,6 +301,27 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.darkSurfaceSoft,
+        selectedColor: AppColors.softMint.withValues(alpha: 0.16),
+        disabledColor: AppColors.darkSurfaceSoft.withValues(alpha: 0.52),
+        checkmarkColor: AppColors.softMint,
+        labelPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        side: const BorderSide(color: AppColors.darkBorderSubtle),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        labelStyle: textTheme.labelLarge?.copyWith(
+          color: AppColors.darkTextPrimary,
+        ),
+        secondaryLabelStyle: textTheme.labelLarge?.copyWith(
+          color: AppColors.softMint,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

@@ -4,6 +4,7 @@ import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_durations.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
+import '../widgets/pressable_surface.dart';
 
 class DateChoiceChip extends StatelessWidget {
   const DateChoiceChip({
@@ -27,9 +28,8 @@ class DateChoiceChip extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
-      child: GestureDetector(
+      child: PressableSurface(
         onTap: onSelected,
-        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: AppDurations.normal,
           curve: AppDurations.easeOut,

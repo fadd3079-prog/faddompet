@@ -4,6 +4,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_durations.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../shared/widgets/pressable_surface.dart';
 
 class TransactionFilterChips extends StatelessWidget {
   const TransactionFilterChips({
@@ -73,9 +74,8 @@ class _FilterChipButton extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
-      child: GestureDetector(
+      child: PressableSurface(
         onTap: onTap,
-        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: AppDurations.normal,
           curve: AppDurations.easeOut,

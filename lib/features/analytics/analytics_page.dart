@@ -12,9 +12,11 @@ import '../../core/formatters/date_formatter.dart';
 import '../../core/formatters/rupiah_input_formatter.dart';
 import '../../data/local/database/app_database.dart';
 import '../../data/repositories/app_models.dart';
-import '../../shared/widgets/top_toast.dart';
+import '../../shared/widgets/app_confirm_dialog.dart';
+import '../../shared/widgets/app_icon_action_button.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/pressable_surface.dart';
+import '../../shared/widgets/top_toast.dart';
 
 class AnalyticsPage extends ConsumerWidget {
   const AnalyticsPage({super.key});
@@ -49,9 +51,10 @@ class AnalyticsPage extends ConsumerWidget {
                     style: Theme.of(context).textTheme.displayMedium,
                   ),
                 ),
-                IconButton.filled(
+                AppIconActionButton(
+                  icon: Icons.add_rounded,
+                  label: 'Tambah budget',
                   onPressed: () => _showBudgetDialog(context, ref, categories),
-                  icon: const Icon(Icons.add_rounded),
                 ),
               ],
             ),
@@ -152,28 +155,14 @@ class AnalyticsPage extends ConsumerWidget {
     WidgetRef ref,
     BudgetProgress item,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus budget?'),
-        content: const Text('Budget yang dihapus tidak bisa dikembalikan.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.expenseRed,
-              foregroundColor: AppColors.onDark,
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
+      title: 'Hapus budget?',
+      message: 'Budget yang dihapus tidak bisa dikembalikan.',
+      confirmLabel: 'Hapus',
+      danger: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     await ref.read(budgetRepositoryProvider).delete(item.budget.id);
     if (!context.mounted) return;
     TopToast.show(
@@ -184,30 +173,15 @@ class AnalyticsPage extends ConsumerWidget {
   }
 
   Future<void> _confirmResetBudget(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset budget bulan ini?'),
-        content: const Text(
+      title: 'Reset budget bulan ini?',
+      message:
           'Semua budget untuk bulan ini akan dihapus. Transaksi tetap aman.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.expenseRed,
-              foregroundColor: AppColors.onDark,
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reset'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Reset',
+      danger: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     await ref
         .read(budgetRepositoryProvider)
         .resetMonth(DateFormatter.monthKey(DateTime.now()));
@@ -325,6 +299,7 @@ class _LineChart extends StatelessWidget {
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false),
         lineBarsData: [
           LineChartBarData(
             spots: spots,
@@ -346,11 +321,40 @@ class _BarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.colorScheme.brightness == Brightness.dark;
+
     return BarChart(
       BarChartData(
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            tooltipBorderRadius: BorderRadius.circular(AppRadius.md),
+            tooltipPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            getTooltipColor: (_) =>
+                isDark ? AppColors.darkSurfaceElevated : AppColors.textPrimary,
+            tooltipBorder: BorderSide(
+              color: isDark
+                  ? AppColors.darkBorderSubtle
+                  : AppColors.textPrimary.withValues(alpha: 0.08),
+            ),
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final item = items[groupIndex];
+              return BarTooltipItem(
+                '${item.label}\n${CurrencyFormatter.rupiah(item.amount)}',
+                theme.textTheme.labelLarge!.copyWith(
+                  color: AppColors.onDark,
+                  height: 1.35,
+                ),
+              );
+            },
+          ),
+        ),
         barGroups: [
           for (var index = 0; index < items.length; index++)
             BarChartGroupData(
@@ -444,7 +448,14 @@ class _BudgetSection extends StatelessWidget {
           children: [
             Expanded(child: Text('Budget', style: theme.textTheme.titleLarge)),
             if (items.isNotEmpty)
-              TextButton(onPressed: onReset, child: const Text('Reset')),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.expenseRed,
+                  side: const BorderSide(color: AppColors.expenseRed),
+                ),
+                onPressed: onReset,
+                child: const Text('Reset'),
+              ),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
@@ -615,7 +626,7 @@ class _BudgetDialogState extends State<_BudgetDialog> {
         ],
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Batal'),
         ),

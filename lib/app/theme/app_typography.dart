@@ -72,14 +72,14 @@ class AppTypography {
       ),
       labelMedium: TextStyle(
         color: secondary,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         height: 1.25,
         letterSpacing: 0,
       ),
       labelSmall: TextStyle(
         color: secondary,
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: FontWeight.w700,
         height: 1.20,
         letterSpacing: 0,

@@ -10,6 +10,8 @@ import '../../app/theme/app_spacing.dart';
 import '../../core/enums/category_type.dart';
 import '../../data/local/database/app_database.dart';
 import '../analytics/analytics_page.dart';
+import '../../shared/widgets/app_confirm_dialog.dart';
+import '../../shared/widgets/app_icon_action_button.dart';
 import '../../shared/widgets/pressable_surface.dart';
 import '../../shared/widgets/top_toast.dart';
 
@@ -78,7 +80,7 @@ class SettingsPage extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.backup_rounded,
             title: 'Data & Cadangan',
-            subtitle: 'Ekspor, impor, dan pulihkan data lokal',
+            subtitle: 'Pindahkan data ke HP baru atau simpan laporan',
             onTap: () => _showBackupSheet(context, ref),
           ),
           _SettingsTile(
@@ -375,31 +377,35 @@ class SettingsPage extends ConsumerWidget {
               const _SheetHeader(
                 title: 'Data & Cadangan',
                 subtitle:
-                    'Cadangkan data sebelum pindah perangkat atau sebelum reset.',
+                    'Simpan salinan data agar mudah dipulihkan saat ganti HP.',
               ),
               const SizedBox(height: AppSpacing.lg),
               _SheetOption(
-                title: 'Ekspor cadangan JSON',
+                icon: Icons.ios_share_rounded,
+                title: 'Cadangkan Data',
+                subtitle:
+                    'Simpan salinan data agar bisa dipulihkan saat ganti HP.',
                 onTap: () => _runBackupAction(
                   context,
                   () => ref.read(backupRepositoryProvider).exportJson(),
-                  'Data berhasil diekspor.',
+                  'Data berhasil dicadangkan.',
                 ),
               ),
               _SheetOption(
-                title: 'Ekspor transaksi CSV',
+                icon: Icons.restore_rounded,
+                title: 'Pulihkan dari Cadangan',
+                subtitle: 'Impor file cadangan FadDompet dari perangkat lama.',
+                onTap: () => _startImport(context, ref),
+              ),
+              _SheetOption(
+                icon: Icons.table_chart_rounded,
+                title: 'Ekspor Laporan CSV',
+                subtitle:
+                    'Simpan daftar transaksi untuk dibuka di spreadsheet.',
                 onTap: () => _runBackupAction(
                   context,
                   () => ref.read(backupRepositoryProvider).exportCsv(),
-                  'CSV berhasil diekspor.',
-                ),
-              ),
-              _SheetOption(
-                title: 'Impor cadangan JSON',
-                onTap: () => _runBackupAction(
-                  context,
-                  () => ref.read(backupRepositoryProvider).importJson(),
-                  'Data berhasil diimpor.',
+                  'Laporan berhasil diekspor.',
                 ),
               ),
             ],
@@ -419,6 +425,39 @@ class SettingsPage extends ConsumerWidget {
       if (!context.mounted) return;
       Navigator.pop(context);
       TopToast.show(context, successMessage, type: TopToastType.success);
+    } catch (_) {
+      if (!context.mounted) return;
+      TopToast.show(
+        context,
+        'File cadangan tidak valid.',
+        type: TopToastType.warning,
+      );
+    }
+  }
+
+  Future<void> _startImport(BuildContext context, WidgetRef ref) async {
+    try {
+      final repository = ref.read(backupRepositoryProvider);
+      final preview = await repository.pickImportPreview();
+      if (preview == null) return;
+      if (!context.mounted) return;
+      final confirmed = await showAppConfirmDialog(
+        context: context,
+        title: 'Pulihkan cadangan?',
+        message:
+            'Memulihkan cadangan akan mengganti data yang ada di perangkat ini. Pastikan kamu sudah mencadangkan data terbaru.\n\nIsi cadangan: ${preview.transactions} transaksi, ${preview.wallets} dompet, ${preview.categories} kategori, dan ${preview.budgets} budget.',
+        confirmLabel: 'Pulihkan',
+        danger: true,
+      );
+      if (!confirmed) return;
+      await repository.restoreImport(preview);
+      if (!context.mounted) return;
+      Navigator.pop(context);
+      TopToast.show(
+        context,
+        'Data berhasil dipulihkan.',
+        type: TopToastType.success,
+      );
     } catch (_) {
       if (!context.mounted) return;
       TopToast.show(
@@ -618,25 +657,88 @@ class _SheetHeader extends StatelessWidget {
 class _SheetOption extends StatelessWidget {
   const _SheetOption({
     required this.title,
+    this.subtitle,
+    this.icon,
     this.selected = false,
     this.destructive = false,
     required this.onTap,
   });
 
   final String title;
+  final String? subtitle;
+  final IconData? icon;
   final bool selected;
   final bool destructive;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      title: Text(
-        title,
-        style: TextStyle(color: destructive ? AppColors.expenseRed : null),
+    final theme = Theme.of(context);
+    final isDark = theme.colorScheme.brightness == Brightness.dark;
+    final accent = destructive
+        ? AppColors.expenseRed
+        : theme.colorScheme.primary;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: PressableSurface(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurfaceSoft : AppColors.surfaceSoft,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: selected
+                  ? accent.withValues(alpha: isDark ? 0.36 : 0.24)
+                  : isDark
+                  ? AppColors.darkBorderSubtle
+                  : AppColors.borderSubtle,
+            ),
+          ),
+          child: Row(
+            children: [
+              if (icon != null) ...[
+                Container(
+                  width: AppSpacing.iconTileSmall,
+                  height: AppSpacing.iconTileSmall,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: isDark ? 0.18 : 0.10),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Icon(icon, color: accent, size: AppSpacing.xl),
+                ),
+                const SizedBox(width: AppSpacing.md),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: destructive ? AppColors.expenseRed : null,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(subtitle!, style: theme.textTheme.bodyMedium),
+                    ],
+                  ],
+                ),
+              ),
+              if (selected)
+                Icon(Icons.check_rounded, color: accent)
+              else
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+            ],
+          ),
+        ),
       ),
-      trailing: selected ? const Icon(Icons.check_rounded) : null,
     );
   }
 }
@@ -702,7 +804,7 @@ class _PinSetupDialogState extends State<_PinSetupDialog> {
         ],
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Batal'),
         ),
@@ -756,7 +858,7 @@ class _PinVerifyDialogState extends State<_PinVerifyDialog> {
         hint: 'Masukkan PIN saat ini',
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Batal'),
         ),
@@ -826,13 +928,13 @@ class _ResetDialogState extends State<_ResetDialog> {
     final valid = _controller.text.trim().toUpperCase() == 'RESET';
 
     return AlertDialog(
-      title: const Text('Reset Semua Data'),
+      title: const Text('Reset semua data?'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Tindakan ini akan menghapus semua transaksi, dompet, kategori, budget, dan pengaturan. Data yang sudah dihapus tidak bisa dikembalikan kecuali kamu punya file cadangan.',
+            'Semua transaksi, dompet, kategori, budget, dan pengaturan akan dihapus dari perangkat ini. Data tidak bisa dikembalikan kecuali kamu punya cadangan.',
           ),
           const SizedBox(height: AppSpacing.lg),
           TextField(
@@ -848,7 +950,7 @@ class _ResetDialogState extends State<_ResetDialog> {
         ],
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.pop(context, false),
           child: const Text('Batal'),
         ),
@@ -858,7 +960,7 @@ class _ResetDialogState extends State<_ResetDialog> {
             foregroundColor: AppColors.onDark,
           ),
           onPressed: valid ? () => Navigator.pop(context, true) : null,
-          child: const Text('Saya mengerti, hapus data'),
+          child: const Text('Reset Data'),
         ),
       ],
     );
@@ -887,9 +989,10 @@ class _CategoryManagerSheet extends ConsumerWidget {
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                   ),
-                  IconButton.filled(
+                  AppIconActionButton(
+                    icon: Icons.add_rounded,
+                    label: 'Tambah kategori',
                     onPressed: () => _showCategoryDialog(context, ref),
-                    icon: const Icon(Icons.add_rounded),
                   ),
                 ],
               ),
@@ -1034,30 +1137,14 @@ class _CategoryManagerSheet extends ConsumerWidget {
     WidgetRef ref,
     CategoryEntry category,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus kategori?'),
-        content: const Text(
-          'Kategori yang sudah dihapus tidak bisa dipakai lagi.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.expenseRed,
-              foregroundColor: AppColors.onDark,
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
+      title: 'Hapus kategori?',
+      message: 'Kategori yang sudah dihapus tidak bisa dipakai lagi.',
+      confirmLabel: 'Hapus',
+      danger: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     final message = await ref
         .read(categoryRepositoryProvider)
         .deleteCategory(category);
@@ -1260,7 +1347,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Batal'),
         ),

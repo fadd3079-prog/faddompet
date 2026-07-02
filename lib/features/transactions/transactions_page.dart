@@ -11,6 +11,7 @@ import '../../core/formatters/currency_formatter.dart';
 import '../../core/formatters/date_formatter.dart';
 import '../../data/repositories/app_models.dart';
 import '../../shared/components/add_transaction_sheet.dart';
+import '../../shared/widgets/app_confirm_dialog.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/top_toast.dart';
 import 'widgets/period_selector.dart';
@@ -269,7 +270,7 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: FilledButton.tonal(
+                      child: OutlinedButton(
                         onPressed: () {
                           Navigator.pop(sheetContext);
                           _edit(detail);
@@ -314,25 +315,15 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
   }
 
   Future<void> _confirmDelete(TransactionDetail detail) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus transaksi?'),
-        content: const Text('Transaksi yang dihapus tidak bisa dikembalikan.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
+      title: 'Hapus transaksi?',
+      message: 'Transaksi yang dihapus tidak bisa dikembalikan.',
+      confirmLabel: 'Hapus',
+      danger: true,
     );
 
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     await ref.read(transactionRepositoryProvider).delete(detail.transaction.id);
     if (!mounted) return;

@@ -11,6 +11,8 @@ import '../../core/formatters/currency_formatter.dart';
 import '../../core/formatters/rupiah_input_formatter.dart';
 import '../../data/local/database/app_database.dart';
 import '../../data/repositories/app_models.dart';
+import '../../shared/widgets/app_confirm_dialog.dart';
+import '../../shared/widgets/app_icon_action_button.dart';
 import '../../shared/widgets/pressable_surface.dart';
 import '../../shared/widgets/top_toast.dart';
 
@@ -44,9 +46,10 @@ class WalletsPage extends ConsumerWidget {
                     style: Theme.of(context).textTheme.displayMedium,
                   ),
                 ),
-                IconButton.filled(
+                AppIconActionButton(
+                  icon: Icons.add_rounded,
+                  label: 'Tambah dompet',
                   onPressed: () => _showWalletForm(context, ref),
-                  icon: const Icon(Icons.add_rounded),
                 ),
               ],
             ),
@@ -183,7 +186,7 @@ class WalletsPage extends ConsumerWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: FilledButton.tonal(
+                          child: OutlinedButton(
                             onPressed: () {
                               Navigator.pop(sheetContext);
                               _showWalletForm(context, ref, wallet.wallet);
@@ -246,26 +249,14 @@ class WalletsPage extends ConsumerWidget {
     WidgetRef ref,
     WalletEntry wallet,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus dompet?'),
-        content: Text(
-          '${wallet.name} akan dihapus jika belum dipakai transaksi.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
+      title: 'Hapus dompet?',
+      message: '${wallet.name} akan dihapus jika belum dipakai transaksi.',
+      confirmLabel: 'Hapus',
+      danger: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     final message = await ref
         .read(walletRepositoryProvider)
@@ -482,7 +473,7 @@ class _WalletFormDialogState extends State<_WalletFormDialog> {
         ],
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Batal'),
         ),
