@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers/app_providers.dart';
-import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../core/formatters/currency_formatter.dart';
 import '../../core/formatters/rupiah_input_formatter.dart';
 import '../../data/repositories/app_models.dart';
+import '../../shared/widgets/app_brand_mark.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
@@ -70,17 +70,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   AppSpacing.xxl,
                 ),
                 children: [
-                  Container(
-                    width: AppSpacing.huge,
-                    height: AppSpacing.huge,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                    ),
-                    child: const Icon(
-                      Icons.account_balance_wallet_rounded,
-                      color: AppColors.onDark,
-                    ),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: AppBrandMark(size: 80),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   Text(

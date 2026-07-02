@@ -7,6 +7,7 @@ import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../data/repositories/security_repository.dart';
+import '../../shared/widgets/app_brand_mark.dart';
 import '../../shared/widgets/pressable_surface.dart';
 
 class AppLockGate extends ConsumerStatefulWidget {
@@ -187,20 +188,7 @@ class _AppLockScreenState extends ConsumerState<_AppLockScreen> {
               child: Column(
                 children: [
                   const Spacer(),
-                  Container(
-                    width: AppSpacing.huge + AppSpacing.md,
-                    height: AppSpacing.huge + AppSpacing.md,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.softMint : AppColors.primary,
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                    ),
-                    child: Icon(
-                      Icons.lock_rounded,
-                      color: isDark
-                          ? AppColors.darkBackground
-                          : AppColors.onDark,
-                    ),
-                  ),
+                  const AppBrandMark(size: 60, radius: AppRadius.lg),
                   const SizedBox(height: AppSpacing.xxl),
                   Text(
                     'Buka FadDompet',

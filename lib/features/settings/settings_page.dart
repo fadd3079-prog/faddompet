@@ -10,6 +10,7 @@ import '../../app/theme/app_spacing.dart';
 import '../../core/enums/category_type.dart';
 import '../../data/local/database/app_database.dart';
 import '../analytics/analytics_page.dart';
+import '../../shared/widgets/app_brand_mark.dart';
 import '../../shared/widgets/app_confirm_dialog.dart';
 import '../../shared/widgets/app_icon_action_button.dart';
 import '../../shared/widgets/pressable_surface.dart';
@@ -127,13 +128,7 @@ class SettingsPage extends ConsumerWidget {
             icon: Icons.info_rounded,
             title: 'Tentang FadDompet',
             subtitle: 'Versi 1.1.0, offline tanpa akun',
-            onTap: () => showAboutDialog(
-              context: context,
-              applicationName: 'FadDompet',
-              applicationVersion: '1.1.0',
-              applicationLegalese:
-                  'Aplikasi keuangan pribadi offline. Data tersimpan di perangkat.',
-            ),
+            onTap: () => _showAboutSheet(context),
           ),
         ],
       ),
@@ -565,6 +560,66 @@ class SettingsPage extends ConsumerWidget {
         type: TopToastType.warning,
       );
     }
+  }
+
+  void _showAboutSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.screen),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const AppBrandMark(size: 64, radius: AppRadius.lg),
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'FadDompet',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Aplikasi pencatat keuangan pribadi offline.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+                child: Text(
+                  'Versi 1.1.0\nData tersimpan lokal di perangkat. Tidak perlu akun atau koneksi cloud.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              FilledButton(
+                onPressed: () => Navigator.pop(sheetContext),
+                child: const Text('Tutup'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
