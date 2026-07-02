@@ -1,6 +1,6 @@
 # FadDompet
 
-FadDompet adalah aplikasi pengelola uang pribadi offline untuk Android. Aplikasi ini membantu pengguna mencatat pemasukan, pengeluaran, transfer antar dompet, budget, dan cadangan data lokal tanpa akun dan tanpa internet.
+FadDompet adalah aplikasi pencatat keuangan pribadi offline untuk mengelola pemasukan, pengeluaran, dompet, budget, dan ringkasan keuangan secara lokal di perangkat.
 
 ## Status
 
@@ -34,6 +34,8 @@ FadDompet v1.1 - Offline personal money management app for Android
 
 Android adalah target utama. Flutter Web digunakan hanya untuk preview pengembangan.
 
+APK rilis dapat dibagikan melalui GitHub Releases.
+
 ## Lisensi
 
-Project ini menggunakan lisensi MIT.
+Lisensi: MIT.

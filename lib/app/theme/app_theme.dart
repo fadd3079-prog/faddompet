@@ -61,13 +61,99 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onDark,
-          minimumSize: const Size.fromHeight(50),
+          disabledBackgroundColor: AppColors.surfaceSoft,
+          disabledForegroundColor: AppColors.textTertiary,
+          minimumSize: const Size.fromHeight(52),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
             vertical: AppSpacing.lg,
           ),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
           textStyle: textTheme.labelLarge,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          disabledForegroundColor: AppColors.textTertiary,
+          minimumSize: const Size.fromHeight(52),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.lg,
+          ),
+          side: const BorderSide(color: AppColors.borderSubtle),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
+          textStyle: textTheme.labelLarge,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          disabledForegroundColor: AppColors.textTertiary,
+          minimumSize: const Size(AppSpacing.iconTile, AppSpacing.iconTile),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
+          textStyle: textTheme.labelLarge,
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: AppColors.textPrimary,
+          disabledForegroundColor: AppColors.textTertiary,
+          minimumSize: const Size.square(AppSpacing.iconTile),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.surfaceSoft,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        labelStyle: textTheme.labelLarge?.copyWith(
+          color: AppColors.textSecondary,
+        ),
+        floatingLabelStyle: textTheme.labelLarge?.copyWith(
+          color: AppColors.primary,
+        ),
+        hintStyle: textTheme.bodyMedium?.copyWith(
+          color: AppColors.textSecondary,
+        ),
+        helperStyle: textTheme.labelSmall?.copyWith(
+          color: AppColors.textSecondary,
+        ),
+        errorStyle: textTheme.labelSmall?.copyWith(color: AppColors.expenseRed),
+        border: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: const BorderSide(color: AppColors.borderSubtle),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: const BorderSide(color: AppColors.borderSubtle),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: const BorderSide(color: AppColors.expenseRed),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: const BorderSide(color: AppColors.expenseRed, width: 1.2),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: BorderSide(
+            color: AppColors.borderSubtle.withValues(alpha: 0.7),
+          ),
         ),
       ),
       listTileTheme: ListTileThemeData(
@@ -134,13 +220,99 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.softMint,
           foregroundColor: AppColors.darkBackground,
-          minimumSize: const Size.fromHeight(50),
+          disabledBackgroundColor: AppColors.darkSurfaceSoft,
+          disabledForegroundColor: AppColors.darkTextTertiary,
+          minimumSize: const Size.fromHeight(52),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
             vertical: AppSpacing.lg,
           ),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
           textStyle: textTheme.labelLarge,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.softMint,
+          disabledForegroundColor: AppColors.darkTextTertiary,
+          minimumSize: const Size.fromHeight(52),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.lg,
+          ),
+          side: const BorderSide(color: AppColors.darkBorderSubtle),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
+          textStyle: textTheme.labelLarge,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.softMint,
+          disabledForegroundColor: AppColors.darkTextTertiary,
+          minimumSize: const Size(AppSpacing.iconTile, AppSpacing.iconTile),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
+          textStyle: textTheme.labelLarge,
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: AppColors.darkTextPrimary,
+          disabledForegroundColor: AppColors.darkTextTertiary,
+          minimumSize: const Size.square(AppSpacing.iconTile),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.darkSurfaceSoft,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        labelStyle: textTheme.labelLarge?.copyWith(
+          color: AppColors.darkTextSecondary,
+        ),
+        floatingLabelStyle: textTheme.labelLarge?.copyWith(
+          color: AppColors.softMint,
+        ),
+        hintStyle: textTheme.bodyMedium?.copyWith(
+          color: AppColors.darkTextSecondary,
+        ),
+        helperStyle: textTheme.labelSmall?.copyWith(
+          color: AppColors.darkTextSecondary,
+        ),
+        errorStyle: textTheme.labelSmall?.copyWith(color: AppColors.expenseRed),
+        border: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: const BorderSide(color: AppColors.darkBorderSubtle),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: const BorderSide(color: AppColors.darkBorderSubtle),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: const BorderSide(color: AppColors.softMint, width: 1.2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: const BorderSide(color: AppColors.expenseRed),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: const BorderSide(color: AppColors.expenseRed, width: 1.2),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: BorderSide(
+            color: AppColors.darkBorderSubtle.withValues(alpha: 0.7),
+          ),
         ),
       ),
       listTileTheme: ListTileThemeData(

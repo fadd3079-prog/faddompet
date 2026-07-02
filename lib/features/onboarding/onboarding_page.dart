@@ -188,13 +188,18 @@ class _InitialBalanceField extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 132,
+            width: 152,
             child: TextField(
               controller: controller,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.end,
               inputFormatters: const [RupiahInputFormatter()],
-              decoration: const InputDecoration(hintText: 'Rp0', isDense: true),
+              decoration: const InputDecoration(
+                labelText: 'Saldo awal',
+                hintText: 'Rp0',
+                helperText: 'Opsional',
+                isDense: true,
+              ),
             ),
           ),
         ],

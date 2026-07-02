@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/providers/app_providers.dart';
 import '../../app/theme/app_colors.dart';
@@ -98,6 +99,27 @@ class SettingsPage extends ConsumerWidget {
             subtitle: 'Reset semua data dengan konfirmasi',
             danger: true,
             onTap: () => _confirmReset(context, ref),
+          ),
+          _SettingsTile(
+            icon: Icons.favorite_border_rounded,
+            title: 'Dukung Pengembangan',
+            subtitle: 'Bantu pengembangan FadDompet tetap berjalan.',
+            onTap: () => _confirmExternalLink(
+              context,
+              url: 'https://tako.id/fadhol_pemula',
+              actionLabel: 'Lanjutkan',
+              note: 'Dukungan bersifat opsional.',
+            ),
+          ),
+          _SettingsTile(
+            icon: Icons.code_rounded,
+            title: 'Repositori GitHub',
+            subtitle: 'Lihat kode sumber dan perkembangan proyek.',
+            onTap: () => _confirmExternalLink(
+              context,
+              url: 'https://github.com/fadd3079-prog/faddompet',
+              actionLabel: 'Buka GitHub',
+            ),
           ),
           _SettingsTile(
             icon: Icons.info_rounded,
@@ -248,8 +270,8 @@ class SettingsPage extends ConsumerWidget {
 
     try {
       await repository.savePin(result.newPin);
-      ref.invalidate(securitySettingsProvider);
       if (!context.mounted) return;
+      ref.invalidate(securitySettingsProvider);
       Navigator.pop(context);
       TopToast.show(
         context,
@@ -280,8 +302,8 @@ class SettingsPage extends ConsumerWidget {
       return;
     }
     await repository.disablePin();
-    ref.invalidate(securitySettingsProvider);
     if (!context.mounted) return;
+    ref.invalidate(securitySettingsProvider);
     Navigator.pop(context);
     TopToast.show(context, 'PIN dinonaktifkan.', type: TopToastType.success);
   }
@@ -291,10 +313,11 @@ class SettingsPage extends ConsumerWidget {
     WidgetRef ref,
     bool value,
   ) async {
+    final repository = ref.read(securityRepositoryProvider);
     try {
-      await ref.read(securityRepositoryProvider).setBiometricEnabled(value);
-      ref.invalidate(securitySettingsProvider);
+      await repository.setBiometricEnabled(value);
       if (!context.mounted) return;
+      ref.invalidate(securitySettingsProvider);
       TopToast.show(
         context,
         value ? 'Biometrik diaktifkan.' : 'Biometrik dinonaktifkan.',
@@ -325,11 +348,11 @@ class SettingsPage extends ConsumerWidget {
                   title: _autoLockLabel(value),
                   selected: settings.autoLockMinutes == value,
                   onTap: () async {
-                    await ref
-                        .read(securityRepositoryProvider)
-                        .setAutoLockMinutes(value);
+                    final repository = ref.read(securityRepositoryProvider);
+                    await repository.setAutoLockMinutes(value);
+                    if (!context.mounted) return;
                     ref.invalidate(securitySettingsProvider);
-                    if (context.mounted) Navigator.pop(context);
+                    Navigator.pop(context);
                   },
                 ),
             ],
@@ -412,10 +435,12 @@ class SettingsPage extends ConsumerWidget {
       builder: (context) => const _ResetDialog(),
     );
     if (confirmed != true) return;
-    await ref.read(backupRepositoryProvider).resetData();
-    await ref.read(securityRepositoryProvider).disablePin();
-    ref.invalidate(securitySettingsProvider);
+    final backupRepository = ref.read(backupRepositoryProvider);
+    final securityRepository = ref.read(securityRepositoryProvider);
+    await backupRepository.resetData();
+    await securityRepository.disablePin();
     if (!context.mounted) return;
+    ref.invalidate(securitySettingsProvider);
     TopToast.show(
       context,
       'Data berhasil direset.',
@@ -430,6 +455,77 @@ class SettingsPage extends ConsumerWidget {
       showDragHandle: true,
       builder: (context) => const _CategoryManagerSheet(),
     );
+  }
+
+  void _confirmExternalLink(
+    BuildContext context, {
+    required String url,
+    required String actionLabel,
+    String? note,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.screen),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const _SheetHeader(
+                title: 'Lanjutkan ke browser?',
+                subtitle: 'Tautan ini akan dibuka di browser.',
+              ),
+              if (note != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                Text(note, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+              const SizedBox(height: AppSpacing.xl),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      child: const Text('Batal'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () async {
+                        Navigator.pop(sheetContext);
+                        await _openExternalLink(context, url);
+                      },
+                      child: Text(actionLabel),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openExternalLink(BuildContext context, String url) async {
+    var opened = false;
+    try {
+      opened = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {
+      opened = false;
+    }
+    if (!opened && context.mounted) {
+      TopToast.show(
+        context,
+        'Tautan belum bisa dibuka.',
+        type: TopToastType.warning,
+      );
+    }
   }
 }
 

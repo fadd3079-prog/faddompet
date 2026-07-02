@@ -13,6 +13,7 @@ class AppRadius {
   static const double frame = 36;
   static const double full = 999;
 
+  static BorderRadius get input => BorderRadius.circular(md);
   static BorderRadius get button => BorderRadius.circular(lg);
   static BorderRadius get card => BorderRadius.circular(xl);
   static BorderRadius get sheet =>

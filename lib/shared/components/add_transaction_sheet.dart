@@ -10,9 +10,11 @@ import '../../app/theme/app_shadows.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../core/enums/transaction_type.dart';
 import '../../core/formatters/currency_formatter.dart';
+import '../../core/formatters/date_formatter.dart';
 import '../../data/local/database/app_database.dart';
 import '../../data/repositories/app_models.dart';
 import '../widgets/top_toast.dart';
+import '../widgets/pressable_surface.dart';
 import 'amount_display.dart';
 import 'amount_keypad.dart';
 import 'category_choice_chip.dart';
@@ -132,7 +134,33 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       );
       if (picked == null) return;
       setState(() {
-        _selectedDate = picked;
+        _selectedDate = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          _selectedDate.hour,
+          _selectedDate.minute,
+        );
+        _dateLabel = label;
+        _noticeMessage = null;
+      });
+      return;
+    }
+
+    if (label == 'Pilih waktu') {
+      final picked = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_selectedDate),
+      );
+      if (picked == null) return;
+      setState(() {
+        _selectedDate = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          picked.hour,
+          picked.minute,
+        );
         _dateLabel = label;
         _noticeMessage = null;
       });
@@ -141,9 +169,16 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
 
     final now = DateTime.now();
     setState(() {
-      _selectedDate = label == 'Kemarin'
+      final value = label == 'Kemarin'
           ? now.subtract(const Duration(days: 1))
           : now;
+      _selectedDate = DateTime(
+        value.year,
+        value.month,
+        value.day,
+        value.hour,
+        value.minute,
+      );
       _dateLabel = label;
       _noticeMessage = null;
     });
@@ -327,11 +362,13 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                             onBackspacePressed: _backspace,
                           ),
                           const SizedBox(height: AppSpacing.xxxl),
-                          if (_type == TransactionType.transfer)
-                            _DatePicker(
-                              selectedDate: _dateLabel,
-                              onSelected: _selectDate,
+                          _DateTimePicker(
+                            selectedOption: _dateLabel,
+                            selectedDateTime: DateFormatter.dateTimeLabel(
+                              _selectedDate,
                             ),
+                            onSelected: _selectDate,
+                          ),
                           const SizedBox(height: AppSpacing.xxxl),
                           if (_type == TransactionType.transfer)
                             _TransferFields(
@@ -732,22 +769,27 @@ class _WalletChipRow extends StatelessWidget {
   }
 }
 
-class _DatePicker extends StatelessWidget {
-  const _DatePicker({required this.selectedDate, required this.onSelected});
+class _DateTimePicker extends StatelessWidget {
+  const _DateTimePicker({
+    required this.selectedOption,
+    required this.selectedDateTime,
+    required this.onSelected,
+  });
 
-  final String selectedDate;
+  final String selectedOption;
+  final String selectedDateTime;
   final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    const dateOptions = ['Hari ini', 'Kemarin', 'Pilih tanggal'];
+    const dateOptions = ['Hari ini', 'Kemarin', 'Pilih tanggal', 'Pilih waktu'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SheetSectionTitle(
-          title: 'Tanggal',
-          subtitle: 'Pilih waktu transaksi.',
+        _SheetSectionTitle(
+          title: 'Tanggal & Waktu',
+          subtitle: selectedDateTime,
         ),
         const SizedBox(height: AppSpacing.lg),
         SingleChildScrollView(
@@ -758,7 +800,7 @@ class _DatePicker extends StatelessWidget {
               for (var index = 0; index < dateOptions.length; index++) ...[
                 DateChoiceChip(
                   label: dateOptions[index],
-                  selected: selectedDate == dateOptions[index],
+                  selected: selectedOption == dateOptions[index],
                   onSelected: () => onSelected(dateOptions[index]),
                 ),
                 if (index != dateOptions.length - 1)
@@ -807,7 +849,7 @@ class _NoteField extends StatelessWidget {
                 : AppColors.surfaceSoft,
             contentPadding: const EdgeInsets.all(AppSpacing.lg),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderRadius: AppRadius.input,
               borderSide: BorderSide(
                 color: isDark
                     ? AppColors.darkBorderSubtle
@@ -815,7 +857,7 @@ class _NoteField extends StatelessWidget {
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderRadius: AppRadius.input,
               borderSide: BorderSide(
                 color: theme.colorScheme.primary.withValues(alpha: 0.46),
               ),
@@ -867,9 +909,9 @@ class _SheetFooter extends StatelessWidget {
             _InlineNotice(message: noticeMessage!, tone: noticeTone),
             const SizedBox(height: AppSpacing.md),
           ],
-          GestureDetector(
-            onTap: saving ? null : onSubmit,
-            behavior: HitTestBehavior.opaque,
+          PressableSurface(
+            onTap: onSubmit,
+            enabled: !saving,
             child: AnimatedContainer(
               duration: AppDurations.normal,
               curve: AppDurations.easeOut,

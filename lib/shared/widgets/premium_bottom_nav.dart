@@ -80,7 +80,7 @@ class PremiumBottomNav extends StatelessWidget {
                         selected: currentIndex == 1,
                         onTap: () => onChanged(1),
                       ),
-                      const SizedBox(width: AppSpacing.huge + AppSpacing.xxl),
+                      const SizedBox(width: AppSpacing.navActionSlot),
                       _NavItem(
                         item: items[2],
                         selected: currentIndex == 2,
@@ -121,8 +121,8 @@ class _NavItem extends StatelessWidget {
     final isDark = theme.colorScheme.brightness == Brightness.dark;
     final activeColor = isDark ? AppColors.softMint : AppColors.primary;
     final inactiveColor = isDark
-        ? AppColors.darkTextTertiary
-        : AppColors.textTertiary;
+        ? AppColors.darkTextSecondary
+        : AppColors.textSecondary;
 
     return Expanded(
       child: Semantics(
@@ -139,8 +139,8 @@ class _NavItem extends StatelessWidget {
                 AnimatedContainer(
                   duration: AppDurations.normal,
                   curve: AppDurations.easeOut,
-                  width: AppSpacing.iconTileSmall,
-                  height: AppSpacing.iconTileSmall,
+                  width: AppSpacing.iconTile,
+                  height: AppSpacing.iconTile,
                   decoration: BoxDecoration(
                     color: selected
                         ? activeColor.withValues(alpha: isDark ? 0.16 : 0.12)
@@ -164,7 +164,7 @@ class _NavItem extends StatelessWidget {
                         child: Icon(
                           selected ? item.selectedIcon : item.icon,
                           color: selected ? activeColor : inactiveColor,
-                          size: AppSpacing.xl,
+                          size: AppSpacing.navIconSize,
                         ),
                       ),
                       if (selected)
@@ -189,7 +189,7 @@ class _NavItem extends StatelessWidget {
                   item.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
+                  style: theme.textTheme.labelMedium?.copyWith(
                     color: selected ? activeColor : inactiveColor,
                     height: 1,
                   ),
@@ -221,12 +221,12 @@ class _QuickAddButton extends StatelessWidget {
         child: Tooltip(
           message: 'Tambah Transaksi',
           child: Container(
-            width: AppSpacing.iconTile + AppSpacing.sm,
-            height: AppSpacing.iconTile + AppSpacing.sm,
-            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            width: AppSpacing.navActionSize,
+            height: AppSpacing.navActionSize,
+            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             decoration: BoxDecoration(
               color: isDark ? AppColors.softMint : AppColors.primary,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderRadius: BorderRadius.circular(AppRadius.hero),
               boxShadow: [...AppShadows.nav(theme.colorScheme.brightness)],
             ),
             child: Icon(
