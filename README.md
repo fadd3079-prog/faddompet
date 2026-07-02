@@ -5,7 +5,7 @@ FadDompet adalah aplikasi pencatat keuangan pribadi offline untuk mengelola pema
 ## Status
 
 ```txt
-FadDompet v1.1 - Offline personal money management app for Android
+FadDompet v1.2.0 - Offline personal money management app for Android
 ```
 
 ## Fitur Utama

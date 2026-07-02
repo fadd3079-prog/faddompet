@@ -2,7 +2,7 @@
 
 All notable changes to FadDompet will be documented in this file.
 
-## Unreleased
+## 1.2.0
 
 ### Security
 

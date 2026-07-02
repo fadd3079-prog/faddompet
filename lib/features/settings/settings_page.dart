@@ -128,7 +128,7 @@ class SettingsPage extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.info_rounded,
             title: 'Tentang FadDompet',
-            subtitle: 'Versi 1.1.0, offline tanpa akun',
+            subtitle: 'Versi 1.2.0, offline tanpa akun',
             onTap: () => _showAboutSheet(context),
           ),
         ],
@@ -598,7 +598,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                 ),
                 child: Text(
-                  'Versi 1.1.0\nData tersimpan lokal di perangkat. Tidak perlu akun atau koneksi cloud.',
+                  'Versi 1.2.0\nData tersimpan lokal di perangkat. Tidak perlu akun atau koneksi cloud.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
