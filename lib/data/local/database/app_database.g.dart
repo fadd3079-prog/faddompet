@@ -274,6 +274,21 @@ class $CategoryEntriesTable extends CategoryEntries
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _isArchivedMeta = const VerificationMeta(
+    'isArchived',
+  );
+  @override
+  late final GeneratedColumn<bool> isArchived = GeneratedColumn<bool>(
+    'is_archived',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_archived" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -305,6 +320,7 @@ class $CategoryEntriesTable extends CategoryEntries
     iconKey,
     colorValue,
     isDefault,
+    isArchived,
     createdAt,
     updatedAt,
   ];
@@ -369,6 +385,12 @@ class $CategoryEntriesTable extends CategoryEntries
         isDefault.isAcceptableOrUnknown(data['is_default']!, _isDefaultMeta),
       );
     }
+    if (data.containsKey('is_archived')) {
+      context.handle(
+        _isArchivedMeta,
+        isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -422,6 +444,10 @@ class $CategoryEntriesTable extends CategoryEntries
         DriftSqlType.bool,
         data['${effectivePrefix}is_default'],
       )!,
+      isArchived: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_archived'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -447,6 +473,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
   final String iconKey;
   final int colorValue;
   final bool isDefault;
+  final bool isArchived;
   final DateTime createdAt;
   final DateTime updatedAt;
   const CategoryEntry({
@@ -457,6 +484,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
     required this.iconKey,
     required this.colorValue,
     required this.isDefault,
+    required this.isArchived,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -470,6 +498,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
     map['icon_key'] = Variable<String>(iconKey);
     map['color_value'] = Variable<int>(colorValue);
     map['is_default'] = Variable<bool>(isDefault);
+    map['is_archived'] = Variable<bool>(isArchived);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -484,6 +513,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
       iconKey: Value(iconKey),
       colorValue: Value(colorValue),
       isDefault: Value(isDefault),
+      isArchived: Value(isArchived),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -502,6 +532,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
       iconKey: serializer.fromJson<String>(json['iconKey']),
       colorValue: serializer.fromJson<int>(json['colorValue']),
       isDefault: serializer.fromJson<bool>(json['isDefault']),
+      isArchived: serializer.fromJson<bool>(json['isArchived']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -517,6 +548,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
       'iconKey': serializer.toJson<String>(iconKey),
       'colorValue': serializer.toJson<int>(colorValue),
       'isDefault': serializer.toJson<bool>(isDefault),
+      'isArchived': serializer.toJson<bool>(isArchived),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -530,6 +562,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
     String? iconKey,
     int? colorValue,
     bool? isDefault,
+    bool? isArchived,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => CategoryEntry(
@@ -540,6 +573,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
     iconKey: iconKey ?? this.iconKey,
     colorValue: colorValue ?? this.colorValue,
     isDefault: isDefault ?? this.isDefault,
+    isArchived: isArchived ?? this.isArchived,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -554,6 +588,9 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
           ? data.colorValue.value
           : this.colorValue,
       isDefault: data.isDefault.present ? data.isDefault.value : this.isDefault,
+      isArchived: data.isArchived.present
+          ? data.isArchived.value
+          : this.isArchived,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -569,6 +606,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
           ..write('iconKey: $iconKey, ')
           ..write('colorValue: $colorValue, ')
           ..write('isDefault: $isDefault, ')
+          ..write('isArchived: $isArchived, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -584,6 +622,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
     iconKey,
     colorValue,
     isDefault,
+    isArchived,
     createdAt,
     updatedAt,
   );
@@ -598,6 +637,7 @@ class CategoryEntry extends DataClass implements Insertable<CategoryEntry> {
           other.iconKey == this.iconKey &&
           other.colorValue == this.colorValue &&
           other.isDefault == this.isDefault &&
+          other.isArchived == this.isArchived &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -610,6 +650,7 @@ class CategoryEntriesCompanion extends UpdateCompanion<CategoryEntry> {
   final Value<String> iconKey;
   final Value<int> colorValue;
   final Value<bool> isDefault;
+  final Value<bool> isArchived;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const CategoryEntriesCompanion({
@@ -620,6 +661,7 @@ class CategoryEntriesCompanion extends UpdateCompanion<CategoryEntry> {
     this.iconKey = const Value.absent(),
     this.colorValue = const Value.absent(),
     this.isDefault = const Value.absent(),
+    this.isArchived = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -631,6 +673,7 @@ class CategoryEntriesCompanion extends UpdateCompanion<CategoryEntry> {
     required String iconKey,
     required int colorValue,
     this.isDefault = const Value.absent(),
+    this.isArchived = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : name = Value(name),
@@ -648,6 +691,7 @@ class CategoryEntriesCompanion extends UpdateCompanion<CategoryEntry> {
     Expression<String>? iconKey,
     Expression<int>? colorValue,
     Expression<bool>? isDefault,
+    Expression<bool>? isArchived,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -659,6 +703,7 @@ class CategoryEntriesCompanion extends UpdateCompanion<CategoryEntry> {
       if (iconKey != null) 'icon_key': iconKey,
       if (colorValue != null) 'color_value': colorValue,
       if (isDefault != null) 'is_default': isDefault,
+      if (isArchived != null) 'is_archived': isArchived,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -672,6 +717,7 @@ class CategoryEntriesCompanion extends UpdateCompanion<CategoryEntry> {
     Value<String>? iconKey,
     Value<int>? colorValue,
     Value<bool>? isDefault,
+    Value<bool>? isArchived,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -683,6 +729,7 @@ class CategoryEntriesCompanion extends UpdateCompanion<CategoryEntry> {
       iconKey: iconKey ?? this.iconKey,
       colorValue: colorValue ?? this.colorValue,
       isDefault: isDefault ?? this.isDefault,
+      isArchived: isArchived ?? this.isArchived,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -712,6 +759,9 @@ class CategoryEntriesCompanion extends UpdateCompanion<CategoryEntry> {
     if (isDefault.present) {
       map['is_default'] = Variable<bool>(isDefault.value);
     }
+    if (isArchived.present) {
+      map['is_archived'] = Variable<bool>(isArchived.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -731,6 +781,7 @@ class CategoryEntriesCompanion extends UpdateCompanion<CategoryEntry> {
           ..write('iconKey: $iconKey, ')
           ..write('colorValue: $colorValue, ')
           ..write('isDefault: $isDefault, ')
+          ..write('isArchived: $isArchived, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -795,6 +846,21 @@ class $WalletEntriesTable extends WalletEntries
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _isArchivedMeta = const VerificationMeta(
+    'isArchived',
+  );
+  @override
+  late final GeneratedColumn<bool> isArchived = GeneratedColumn<bool>(
+    'is_archived',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_archived" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -823,6 +889,7 @@ class $WalletEntriesTable extends WalletEntries
     name,
     type,
     initialBalance,
+    isArchived,
     createdAt,
     updatedAt,
   ];
@@ -866,6 +933,12 @@ class $WalletEntriesTable extends WalletEntries
         ),
       );
     }
+    if (data.containsKey('is_archived')) {
+      context.handle(
+        _isArchivedMeta,
+        isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -907,6 +980,10 @@ class $WalletEntriesTable extends WalletEntries
         DriftSqlType.int,
         data['${effectivePrefix}initial_balance'],
       )!,
+      isArchived: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_archived'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -929,6 +1006,7 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
   final String name;
   final String type;
   final int initialBalance;
+  final bool isArchived;
   final DateTime createdAt;
   final DateTime updatedAt;
   const WalletEntry({
@@ -936,6 +1014,7 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
     required this.name,
     required this.type,
     required this.initialBalance,
+    required this.isArchived,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -946,6 +1025,7 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
     map['name'] = Variable<String>(name);
     map['type'] = Variable<String>(type);
     map['initial_balance'] = Variable<int>(initialBalance);
+    map['is_archived'] = Variable<bool>(isArchived);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -957,6 +1037,7 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
       name: Value(name),
       type: Value(type),
       initialBalance: Value(initialBalance),
+      isArchived: Value(isArchived),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -972,6 +1053,7 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
       name: serializer.fromJson<String>(json['name']),
       type: serializer.fromJson<String>(json['type']),
       initialBalance: serializer.fromJson<int>(json['initialBalance']),
+      isArchived: serializer.fromJson<bool>(json['isArchived']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -984,6 +1066,7 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
       'name': serializer.toJson<String>(name),
       'type': serializer.toJson<String>(type),
       'initialBalance': serializer.toJson<int>(initialBalance),
+      'isArchived': serializer.toJson<bool>(isArchived),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -994,6 +1077,7 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
     String? name,
     String? type,
     int? initialBalance,
+    bool? isArchived,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => WalletEntry(
@@ -1001,6 +1085,7 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
     name: name ?? this.name,
     type: type ?? this.type,
     initialBalance: initialBalance ?? this.initialBalance,
+    isArchived: isArchived ?? this.isArchived,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -1012,6 +1097,9 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
       initialBalance: data.initialBalance.present
           ? data.initialBalance.value
           : this.initialBalance,
+      isArchived: data.isArchived.present
+          ? data.isArchived.value
+          : this.isArchived,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1024,6 +1112,7 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
           ..write('name: $name, ')
           ..write('type: $type, ')
           ..write('initialBalance: $initialBalance, ')
+          ..write('isArchived: $isArchived, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1031,8 +1120,15 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, type, initialBalance, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    type,
+    initialBalance,
+    isArchived,
+    createdAt,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1041,6 +1137,7 @@ class WalletEntry extends DataClass implements Insertable<WalletEntry> {
           other.name == this.name &&
           other.type == this.type &&
           other.initialBalance == this.initialBalance &&
+          other.isArchived == this.isArchived &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1050,6 +1147,7 @@ class WalletEntriesCompanion extends UpdateCompanion<WalletEntry> {
   final Value<String> name;
   final Value<String> type;
   final Value<int> initialBalance;
+  final Value<bool> isArchived;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const WalletEntriesCompanion({
@@ -1057,6 +1155,7 @@ class WalletEntriesCompanion extends UpdateCompanion<WalletEntry> {
     this.name = const Value.absent(),
     this.type = const Value.absent(),
     this.initialBalance = const Value.absent(),
+    this.isArchived = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -1065,6 +1164,7 @@ class WalletEntriesCompanion extends UpdateCompanion<WalletEntry> {
     required String name,
     required String type,
     this.initialBalance = const Value.absent(),
+    this.isArchived = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : name = Value(name),
@@ -1076,6 +1176,7 @@ class WalletEntriesCompanion extends UpdateCompanion<WalletEntry> {
     Expression<String>? name,
     Expression<String>? type,
     Expression<int>? initialBalance,
+    Expression<bool>? isArchived,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -1084,6 +1185,7 @@ class WalletEntriesCompanion extends UpdateCompanion<WalletEntry> {
       if (name != null) 'name': name,
       if (type != null) 'type': type,
       if (initialBalance != null) 'initial_balance': initialBalance,
+      if (isArchived != null) 'is_archived': isArchived,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -1094,6 +1196,7 @@ class WalletEntriesCompanion extends UpdateCompanion<WalletEntry> {
     Value<String>? name,
     Value<String>? type,
     Value<int>? initialBalance,
+    Value<bool>? isArchived,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -1102,6 +1205,7 @@ class WalletEntriesCompanion extends UpdateCompanion<WalletEntry> {
       name: name ?? this.name,
       type: type ?? this.type,
       initialBalance: initialBalance ?? this.initialBalance,
+      isArchived: isArchived ?? this.isArchived,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -1122,6 +1226,9 @@ class WalletEntriesCompanion extends UpdateCompanion<WalletEntry> {
     if (initialBalance.present) {
       map['initial_balance'] = Variable<int>(initialBalance.value);
     }
+    if (isArchived.present) {
+      map['is_archived'] = Variable<bool>(isArchived.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1138,6 +1245,7 @@ class WalletEntriesCompanion extends UpdateCompanion<WalletEntry> {
           ..write('name: $name, ')
           ..write('type: $type, ')
           ..write('initialBalance: $initialBalance, ')
+          ..write('isArchived: $isArchived, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -3368,6 +3476,7 @@ typedef $$CategoryEntriesTableCreateCompanionBuilder =
       required String iconKey,
       required int colorValue,
       Value<bool> isDefault,
+      Value<bool> isArchived,
       required DateTime createdAt,
       required DateTime updatedAt,
     });
@@ -3380,6 +3489,7 @@ typedef $$CategoryEntriesTableUpdateCompanionBuilder =
       Value<String> iconKey,
       Value<int> colorValue,
       Value<bool> isDefault,
+      Value<bool> isArchived,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -3499,6 +3609,11 @@ class $$CategoryEntriesTableFilterComposer
 
   ColumnFilters<bool> get isDefault => $composableBuilder(
     column: $table.isDefault,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isArchived => $composableBuilder(
+    column: $table.isArchived,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3632,6 +3747,11 @@ class $$CategoryEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isArchived => $composableBuilder(
+    column: $table.isArchived,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3674,6 +3794,11 @@ class $$CategoryEntriesTableAnnotationComposer
 
   GeneratedColumn<bool> get isDefault =>
       $composableBuilder(column: $table.isDefault, builder: (column) => column);
+
+  GeneratedColumn<bool> get isArchived => $composableBuilder(
+    column: $table.isArchived,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -3800,6 +3925,7 @@ class $$CategoryEntriesTableTableManager
                 Value<String> iconKey = const Value.absent(),
                 Value<int> colorValue = const Value.absent(),
                 Value<bool> isDefault = const Value.absent(),
+                Value<bool> isArchived = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => CategoryEntriesCompanion(
@@ -3810,6 +3936,7 @@ class $$CategoryEntriesTableTableManager
                 iconKey: iconKey,
                 colorValue: colorValue,
                 isDefault: isDefault,
+                isArchived: isArchived,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -3822,6 +3949,7 @@ class $$CategoryEntriesTableTableManager
                 required String iconKey,
                 required int colorValue,
                 Value<bool> isDefault = const Value.absent(),
+                Value<bool> isArchived = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
               }) => CategoryEntriesCompanion.insert(
@@ -3832,6 +3960,7 @@ class $$CategoryEntriesTableTableManager
                 iconKey: iconKey,
                 colorValue: colorValue,
                 isDefault: isDefault,
+                isArchived: isArchived,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -3954,6 +4083,7 @@ typedef $$WalletEntriesTableCreateCompanionBuilder =
       required String name,
       required String type,
       Value<int> initialBalance,
+      Value<bool> isArchived,
       required DateTime createdAt,
       required DateTime updatedAt,
     });
@@ -3963,6 +4093,7 @@ typedef $$WalletEntriesTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String> type,
       Value<int> initialBalance,
+      Value<bool> isArchived,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -4027,6 +4158,11 @@ class $$WalletEntriesTableFilterComposer
 
   ColumnFilters<int> get initialBalance => $composableBuilder(
     column: $table.initialBalance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isArchived => $composableBuilder(
+    column: $table.isArchived,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4095,6 +4231,11 @@ class $$WalletEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isArchived => $composableBuilder(
+    column: $table.isArchived,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -4126,6 +4267,11 @@ class $$WalletEntriesTableAnnotationComposer
 
   GeneratedColumn<int> get initialBalance => $composableBuilder(
     column: $table.initialBalance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isArchived => $composableBuilder(
+    column: $table.isArchived,
     builder: (column) => column,
   );
 
@@ -4194,6 +4340,7 @@ class $$WalletEntriesTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<int> initialBalance = const Value.absent(),
+                Value<bool> isArchived = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => WalletEntriesCompanion(
@@ -4201,6 +4348,7 @@ class $$WalletEntriesTableTableManager
                 name: name,
                 type: type,
                 initialBalance: initialBalance,
+                isArchived: isArchived,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -4210,6 +4358,7 @@ class $$WalletEntriesTableTableManager
                 required String name,
                 required String type,
                 Value<int> initialBalance = const Value.absent(),
+                Value<bool> isArchived = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
               }) => WalletEntriesCompanion.insert(
@@ -4217,6 +4366,7 @@ class $$WalletEntriesTableTableManager
                 name: name,
                 type: type,
                 initialBalance: initialBalance,
+                isArchived: isArchived,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),

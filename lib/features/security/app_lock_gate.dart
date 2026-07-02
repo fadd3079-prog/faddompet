@@ -58,7 +58,8 @@ class _AppLockGateState extends ConsumerState<AppLockGate>
     if (!settings.pinEnabled) return;
 
     final elapsed = DateTime.now().difference(backgroundedAt);
-    final shouldLock = settings.autoLockMinutes == 0 ||
+    final shouldLock =
+        settings.autoLockMinutes == 0 ||
         elapsed >= Duration(minutes: settings.autoLockMinutes);
     if (shouldLock && mounted) {
       setState(() => _locked = true);
@@ -154,7 +155,9 @@ class _AppLockScreenState extends ConsumerState<_AppLockScreen> {
 
   Future<void> _biometric() async {
     try {
-      final ok = await ref.read(securityRepositoryProvider).unlockWithBiometric();
+      final ok = await ref
+          .read(securityRepositoryProvider)
+          .unlockWithBiometric();
       if (!mounted) return;
       if (ok) {
         widget.onUnlocked();
@@ -193,7 +196,9 @@ class _AppLockScreenState extends ConsumerState<_AppLockScreen> {
                     ),
                     child: Icon(
                       Icons.lock_rounded,
-                      color: isDark ? AppColors.darkBackground : AppColors.onDark,
+                      color: isDark
+                          ? AppColors.darkBackground
+                          : AppColors.onDark,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
@@ -212,13 +217,19 @@ class _AppLockScreenState extends ConsumerState<_AppLockScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      for (var index = 0; index < widget.settings.pinLength; index++) ...[
+                      for (
+                        var index = 0;
+                        index < widget.settings.pinLength;
+                        index++
+                      ) ...[
                         Container(
                           width: AppSpacing.md,
                           height: AppSpacing.md,
                           decoration: BoxDecoration(
                             color: index < _pin.length
-                                ? (isDark ? AppColors.softMint : AppColors.primary)
+                                ? (isDark
+                                      ? AppColors.softMint
+                                      : AppColors.primary)
                                 : theme.colorScheme.outline,
                             borderRadius: BorderRadius.circular(AppRadius.full),
                           ),
@@ -281,7 +292,11 @@ class _PinKeypad extends StatelessWidget {
                 Expanded(
                   child: value.isEmpty
                       ? const SizedBox(height: AppSpacing.huge + AppSpacing.md)
-                      : _PinKey(value: value, onDigit: onDigit, onBackspace: onBackspace),
+                      : _PinKey(
+                          value: value,
+                          onDigit: onDigit,
+                          onBackspace: onBackspace,
+                        ),
                 ),
                 if (value != row.last) const SizedBox(width: AppSpacing.md),
               ],

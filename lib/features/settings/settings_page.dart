@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers/app_providers.dart';
@@ -7,6 +8,9 @@ import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../core/enums/category_type.dart';
 import '../../data/local/database/app_database.dart';
+import '../analytics/analytics_page.dart';
+import '../../shared/widgets/pressable_surface.dart';
+import '../../shared/widgets/top_toast.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -15,6 +19,9 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref
         .watch(appSettingsProvider)
+        .maybeWhen(data: (value) => value, orElse: () => null);
+    final security = ref
+        .watch(securitySettingsProvider)
         .maybeWhen(data: (value) => value, orElse: () => null);
     final theme = Theme.of(context);
 
@@ -45,37 +52,63 @@ class SettingsPage extends ConsumerWidget {
                 : 'Nominal terlihat',
             trailing: Switch(
               value: settings?.hideBalance ?? false,
-              onChanged: (value) {
-                ref.read(settingsRepositoryProvider).setHideBalance(value);
-              },
+              onChanged: (value) =>
+                  ref.read(settingsRepositoryProvider).setHideBalance(value),
             ),
+          ),
+          _SettingsTile(
+            icon: Icons.insights_rounded,
+            title: 'Analitik & Budget',
+            subtitle: 'Lihat grafik dan atur budget bulanan',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => const Scaffold(body: AnalyticsPage()),
+              ),
+            ),
+          ),
+          _SettingsTile(
+            icon: Icons.lock_rounded,
+            title: 'Keamanan',
+            subtitle: security?.pinEnabled ?? false
+                ? 'PIN aktif, ${_autoLockLabel(security!.autoLockMinutes)}'
+                : 'Buat PIN untuk mengunci aplikasi',
+            onTap: () => _showSecuritySheet(context),
+          ),
+          _SettingsTile(
+            icon: Icons.backup_rounded,
+            title: 'Data & Cadangan',
+            subtitle: 'Ekspor, impor, dan pulihkan data lokal',
+            onTap: () => _showBackupSheet(context, ref),
           ),
           _SettingsTile(
             icon: Icons.category_rounded,
             title: 'Kategori',
-            subtitle: 'Tambah atau ubah kategori transaksi',
-            onTap: () => _showCategoriesSheet(context, ref),
-          ),
-          _SettingsTile(
-            icon: Icons.backup_rounded,
-            title: 'Data & Backup',
-            subtitle: 'Ekspor, impor, atau reset data lokal',
-            onTap: () => _showBackupSheet(context, ref),
+            subtitle: 'Tambah, edit, atau nonaktifkan kategori',
+            onTap: () => _showCategoriesSheet(context),
           ),
           const _SettingsTile(
-            icon: Icons.lock_rounded,
-            title: 'Keamanan',
-            subtitle: 'Biometrik disiapkan untuk versi berikutnya',
+            icon: Icons.payments_rounded,
+            title: 'Mata uang',
+            subtitle:
+                'IDR - Rupiah. Pilihan mata uang lain akan tersedia nanti.',
+          ),
+          _SettingsTile(
+            icon: Icons.warning_rounded,
+            title: 'Zona Bahaya',
+            subtitle: 'Reset semua data dengan konfirmasi',
+            danger: true,
+            onTap: () => _confirmReset(context, ref),
           ),
           _SettingsTile(
             icon: Icons.info_rounded,
-            title: 'Tentang Faddompet',
-            subtitle: 'Versi 1.0.0, offline tanpa akun',
+            title: 'Tentang FadDompet',
+            subtitle: 'Versi 1.1.0, offline tanpa akun',
             onTap: () => showAboutDialog(
               context: context,
-              applicationName: 'Faddompet',
-              applicationVersion: '1.0.0',
-              applicationLegalese: 'Aplikasi keuangan pribadi offline.',
+              applicationName: 'FadDompet',
+              applicationVersion: '1.1.0',
+              applicationLegalese:
+                  'Aplikasi keuangan pribadi offline. Data tersimpan di perangkat.',
             ),
           ),
         ],
@@ -94,7 +127,7 @@ class SettingsPage extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _SheetOption(
-                title: 'System',
+                title: 'Ikuti perangkat',
                 selected: selected == 'system',
                 onTap: () => _setTheme(context, ref, 'system'),
               ),
@@ -121,9 +154,189 @@ class SettingsPage extends ConsumerWidget {
     String value,
   ) async {
     await ref.read(settingsRepositoryProvider).setThemeMode(value);
-    if (context.mounted) {
-      Navigator.pop(context);
+    if (context.mounted) Navigator.pop(context);
+  }
+
+  void _showSecuritySheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => Consumer(
+        builder: (context, ref, _) {
+          final security = ref.watch(securitySettingsProvider);
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.screen),
+              child: security.when(
+                data: (settings) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const _SheetHeader(
+                      title: 'Keamanan',
+                      subtitle:
+                          'Kunci FadDompet dengan PIN. Biometrik tetap punya PIN cadangan.',
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    if (settings.pinEnabled) ...[
+                      _SheetOption(
+                        title: 'Ubah PIN',
+                        onTap: () => _createOrChangePin(
+                          context,
+                          ref,
+                          requireCurrent: true,
+                        ),
+                      ),
+                      _SheetOption(
+                        title: 'Nonaktifkan PIN',
+                        destructive: true,
+                        onTap: () => _disablePin(context, ref),
+                      ),
+                    ] else
+                      _SheetOption(
+                        title: 'Buat PIN',
+                        onTap: () => _createOrChangePin(context, ref),
+                      ),
+                    SwitchListTile.adaptive(
+                      value: settings.biometricEnabled,
+                      onChanged: settings.pinEnabled
+                          ? (value) => _toggleBiometric(context, ref, value)
+                          : null,
+                      title: const Text('Buka dengan biometrik'),
+                      subtitle: const Text('Opsional, PIN tetap bisa dipakai.'),
+                    ),
+                    ListTile(
+                      onTap: settings.pinEnabled
+                          ? () => _showAutoLockSheet(context, ref, settings)
+                          : null,
+                      title: const Text('Kunci otomatis'),
+                      subtitle: Text(_autoLockLabel(settings.autoLockMinutes)),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                    ),
+                  ],
+                ),
+                loading: () => const Center(child: Text('Memuat keamanan')),
+                error: (_, _) =>
+                    const Center(child: Text('Keamanan belum bisa dimuat')),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _createOrChangePin(
+    BuildContext context,
+    WidgetRef ref, {
+    bool requireCurrent = false,
+  }) async {
+    final result = await showDialog<_PinSetupResult>(
+      context: context,
+      builder: (context) => _PinSetupDialog(requireCurrent: requireCurrent),
+    );
+    if (result == null) return;
+
+    final repository = ref.read(securityRepositoryProvider);
+    if (requireCurrent) {
+      final ok = await repository.verifyPin(result.currentPin ?? '');
+      if (!context.mounted) return;
+      if (!ok) {
+        TopToast.show(context, 'PIN tidak sesuai.', type: TopToastType.warning);
+        return;
+      }
     }
+
+    try {
+      await repository.savePin(result.newPin);
+      ref.invalidate(securitySettingsProvider);
+      if (!context.mounted) return;
+      Navigator.pop(context);
+      TopToast.show(
+        context,
+        requireCurrent ? 'PIN berhasil diperbarui.' : 'PIN berhasil dibuat.',
+        type: TopToastType.success,
+      );
+    } on ArgumentError catch (error) {
+      if (!context.mounted) return;
+      TopToast.show(
+        context,
+        error.message.toString(),
+        type: TopToastType.warning,
+      );
+    }
+  }
+
+  Future<void> _disablePin(BuildContext context, WidgetRef ref) async {
+    final pin = await showDialog<String>(
+      context: context,
+      builder: (context) => const _PinVerifyDialog(),
+    );
+    if (pin == null) return;
+    final repository = ref.read(securityRepositoryProvider);
+    final ok = await repository.verifyPin(pin);
+    if (!context.mounted) return;
+    if (!ok) {
+      TopToast.show(context, 'PIN tidak sesuai.', type: TopToastType.warning);
+      return;
+    }
+    await repository.disablePin();
+    ref.invalidate(securitySettingsProvider);
+    if (!context.mounted) return;
+    Navigator.pop(context);
+    TopToast.show(context, 'PIN dinonaktifkan.', type: TopToastType.success);
+  }
+
+  Future<void> _toggleBiometric(
+    BuildContext context,
+    WidgetRef ref,
+    bool value,
+  ) async {
+    try {
+      await ref.read(securityRepositoryProvider).setBiometricEnabled(value);
+      ref.invalidate(securitySettingsProvider);
+      if (!context.mounted) return;
+      TopToast.show(
+        context,
+        value ? 'Biometrik diaktifkan.' : 'Biometrik dinonaktifkan.',
+        type: TopToastType.success,
+      );
+    } on ArgumentError catch (error) {
+      if (!context.mounted) return;
+      TopToast.show(
+        context,
+        error.message.toString(),
+        type: TopToastType.warning,
+      );
+    }
+  }
+
+  void _showAutoLockSheet(BuildContext context, WidgetRef ref, settings) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.screen),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final value in const [0, 1, 5, 15])
+                _SheetOption(
+                  title: _autoLockLabel(value),
+                  selected: settings.autoLockMinutes == value,
+                  onTap: () async {
+                    await ref
+                        .read(securityRepositoryProvider)
+                        .setAutoLockMinutes(value);
+                    ref.invalidate(securitySettingsProvider);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showBackupSheet(BuildContext context, WidgetRef ref) {
@@ -136,8 +349,14 @@ class SettingsPage extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const _SheetHeader(
+                title: 'Data & Cadangan',
+                subtitle:
+                    'Cadangkan data sebelum pindah perangkat atau sebelum reset.',
+              ),
+              const SizedBox(height: AppSpacing.lg),
               _SheetOption(
-                title: 'Ekspor backup JSON',
+                title: 'Ekspor cadangan JSON',
                 onTap: () => _runBackupAction(
                   context,
                   () => ref.read(backupRepositoryProvider).exportJson(),
@@ -153,17 +372,12 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ),
               _SheetOption(
-                title: 'Impor backup JSON',
+                title: 'Impor cadangan JSON',
                 onTap: () => _runBackupAction(
                   context,
                   () => ref.read(backupRepositoryProvider).importJson(),
                   'Data berhasil diimpor.',
                 ),
-              ),
-              _SheetOption(
-                title: 'Reset data',
-                destructive: true,
-                onTap: () => _confirmReset(context, ref),
               ),
             ],
           ),
@@ -181,48 +395,35 @@ class SettingsPage extends ConsumerWidget {
       await action();
       if (!context.mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(successMessage)));
+      TopToast.show(context, successMessage, type: TopToastType.success);
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
+      TopToast.show(
         context,
-      ).showSnackBar(const SnackBar(content: Text('File backup tidak valid.')));
+        'File cadangan tidak valid.',
+        type: TopToastType.warning,
+      );
     }
   }
 
   Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset data?'),
-        content: const Text(
-          'Semua transaksi, dompet, kategori, dan budget akan dibuat ulang.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reset'),
-          ),
-        ],
-      ),
+      builder: (context) => const _ResetDialog(),
     );
-
     if (confirmed != true) return;
     await ref.read(backupRepositoryProvider).resetData();
+    await ref.read(securityRepositoryProvider).disablePin();
+    ref.invalidate(securitySettingsProvider);
     if (!context.mounted) return;
-    Navigator.pop(context);
-    ScaffoldMessenger.of(
+    TopToast.show(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Data berhasil direset.')));
+      'Data berhasil direset.',
+      type: TopToastType.success,
+    );
   }
 
-  void _showCategoriesSheet(BuildContext context, WidgetRef ref) {
+  void _showCategoriesSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -239,6 +440,7 @@ class _SettingsTile extends StatelessWidget {
     required this.subtitle,
     this.trailing,
     this.onTap,
+    this.danger = false,
   });
 
   final IconData icon;
@@ -246,40 +448,39 @@ class _SettingsTile extends StatelessWidget {
   final String subtitle;
   final Widget? trailing;
   final VoidCallback? onTap;
+  final bool danger;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.colorScheme.brightness == Brightness.dark;
+    final accent = danger ? AppColors.expenseRed : theme.colorScheme.primary;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
+      child: PressableSurface(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(
+              color: danger
+                  ? AppColors.expenseRed.withValues(alpha: 0.28)
+                  : isDark
+                  ? AppColors.darkBorderSubtle
+                  : AppColors.borderSubtle,
+            ),
           ),
-        ),
-        child: Material(
-          color: Colors.transparent,
           child: ListTile(
-            onTap: onTap,
             leading: Container(
               width: AppSpacing.iconTileSmall + AppSpacing.xxs,
               height: AppSpacing.iconTileSmall + AppSpacing.xxs,
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.softMint.withValues(alpha: 0.12)
-                    : AppColors.surfaceMint,
+                color: accent.withValues(alpha: isDark ? 0.18 : 0.10),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: Icon(
-                icon,
-                color: isDark ? AppColors.softMint : AppColors.primary,
-                size: 21,
-              ),
+              child: Icon(icon, color: accent, size: 21),
             ),
             title: Text(title, style: theme.textTheme.titleMedium),
             subtitle: Text(subtitle),
@@ -291,6 +492,29 @@ class _SettingsTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SheetHeader extends StatelessWidget {
+  const _SheetHeader({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(title, style: theme.textTheme.headlineSmall),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(subtitle, style: theme.textTheme.bodyMedium),
+      ],
     );
   }
 }
@@ -321,12 +545,236 @@ class _SheetOption extends StatelessWidget {
   }
 }
 
+class _PinSetupDialog extends StatefulWidget {
+  const _PinSetupDialog({required this.requireCurrent});
+
+  final bool requireCurrent;
+
+  @override
+  State<_PinSetupDialog> createState() => _PinSetupDialogState();
+}
+
+class _PinSetupDialogState extends State<_PinSetupDialog> {
+  final _currentController = TextEditingController();
+  final _newController = TextEditingController();
+  final _confirmController = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _currentController.dispose();
+    _newController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.requireCurrent ? 'Ubah PIN' : 'Buat PIN'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.requireCurrent) ...[
+            _PinTextField(
+              controller: _currentController,
+              label: 'PIN lama',
+              hint: 'Masukkan PIN lama',
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+          _PinTextField(
+            controller: _newController,
+            label: 'PIN baru',
+            hint: '4 sampai 6 angka',
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _PinTextField(
+            controller: _confirmController,
+            label: 'Konfirmasi PIN',
+            hint: 'Ulangi PIN baru',
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              _error!,
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(color: AppColors.expenseRed),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Simpan')),
+      ],
+    );
+  }
+
+  void _submit() {
+    final pin = _newController.text.trim();
+    final confirm = _confirmController.text.trim();
+    if (pin != confirm) {
+      setState(() => _error = 'PIN tidak sama.');
+      return;
+    }
+    Navigator.pop(
+      context,
+      _PinSetupResult(
+        currentPin: widget.requireCurrent
+            ? _currentController.text.trim()
+            : null,
+        newPin: pin,
+      ),
+    );
+  }
+}
+
+class _PinVerifyDialog extends StatefulWidget {
+  const _PinVerifyDialog();
+
+  @override
+  State<_PinVerifyDialog> createState() => _PinVerifyDialogState();
+}
+
+class _PinVerifyDialogState extends State<_PinVerifyDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Nonaktifkan PIN'),
+      content: _PinTextField(
+        controller: _controller,
+        label: 'PIN',
+        hint: 'Masukkan PIN saat ini',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          child: const Text('Lanjut'),
+        ),
+      ],
+    );
+  }
+}
+
+class _PinTextField extends StatelessWidget {
+  const _PinTextField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      obscureText: true,
+      keyboardType: TextInputType.number,
+      maxLength: 6,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        counterText: '',
+        helperText: 'PIN hanya tersimpan aman di perangkat ini.',
+      ),
+    );
+  }
+}
+
+class _PinSetupResult {
+  const _PinSetupResult({required this.currentPin, required this.newPin});
+
+  final String? currentPin;
+  final String newPin;
+}
+
+class _ResetDialog extends StatefulWidget {
+  const _ResetDialog();
+
+  @override
+  State<_ResetDialog> createState() => _ResetDialogState();
+}
+
+class _ResetDialogState extends State<_ResetDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final valid = _controller.text.trim().toUpperCase() == 'RESET';
+
+    return AlertDialog(
+      title: const Text('Reset Semua Data'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Tindakan ini akan menghapus semua transaksi, dompet, kategori, budget, dan pengaturan. Data yang sudah dihapus tidak bisa dikembalikan kecuali kamu punya file cadangan.',
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          TextField(
+            controller: _controller,
+            textCapitalization: TextCapitalization.characters,
+            decoration: const InputDecoration(
+              labelText: 'Ketik RESET',
+              hintText: 'RESET',
+              helperText: 'Cadangkan data terlebih dahulu jika perlu.',
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Batal'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.expenseRed,
+            foregroundColor: AppColors.onDark,
+          ),
+          onPressed: valid ? () => Navigator.pop(context, true) : null,
+          child: const Text('Saya mengerti, hapus data'),
+        ),
+      ],
+    );
+  }
+}
+
 class _CategoryManagerSheet extends ConsumerWidget {
   const _CategoryManagerSheet();
 
   @override
-  Widget build(BuildContext context, WidgetRef sheetRef) {
-    final categories = sheetRef.watch(categoriesProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categories = ref.watch(categoriesProvider);
 
     return SafeArea(
       child: SizedBox(
@@ -344,26 +792,24 @@ class _CategoryManagerSheet extends ConsumerWidget {
                     ),
                   ),
                   IconButton.filled(
-                    onPressed: () => _showCategoryDialog(context, sheetRef),
+                    onPressed: () => _showCategoryDialog(context, ref),
                     icon: const Icon(Icons.add_rounded),
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'Kategori nonaktif tidak muncul saat menambah transaksi baru.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: AppSpacing.xl),
               for (final group in _groupCategories(items).entries) ...[
                 Text(group.key, style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: AppSpacing.sm),
                 for (final category in group.value)
-                  ListTile(
-                    title: Text(category.name),
-                    subtitle: Text(
-                      category.type == 'income' ? 'Pemasukan' : 'Pengeluaran',
-                    ),
-                    trailing: category.isDefault
-                        ? const Text('Bawaan')
-                        : const Icon(Icons.edit_rounded),
-                    onTap: () =>
-                        _showCategoryDialog(context, sheetRef, category),
+                  _CategoryTile(
+                    category: category,
+                    onTap: () => _showCategoryActions(context, ref, category),
                   ),
                 const SizedBox(height: AppSpacing.lg),
               ],
@@ -385,6 +831,61 @@ class _CategoryManagerSheet extends ConsumerWidget {
     return groups;
   }
 
+  void _showCategoryActions(
+    BuildContext context,
+    WidgetRef ref,
+    CategoryEntry category,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.screen),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _SheetHeader(
+                title: category.name,
+                subtitle: category.isArchived
+                    ? 'Kategori ini sedang nonaktif.'
+                    : 'Pilih tindakan untuk kategori ini.',
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              _SheetOption(
+                title: 'Edit',
+                onTap: () {
+                  Navigator.pop(context);
+                  _showCategoryDialog(context, ref, category);
+                },
+              ),
+              _SheetOption(
+                title: category.isArchived ? 'Aktifkan' : 'Nonaktifkan',
+                onTap: () {
+                  Navigator.pop(context);
+                  _setCategoryArchived(
+                    context,
+                    ref,
+                    category,
+                    !category.isArchived,
+                  );
+                },
+              ),
+              _SheetOption(
+                title: 'Hapus',
+                destructive: true,
+                onTap: () {
+                  Navigator.pop(context);
+                  _deleteCategory(context, ref, category);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showCategoryDialog(
     BuildContext context,
     WidgetRef ref, [
@@ -397,18 +898,162 @@ class _CategoryManagerSheet extends ConsumerWidget {
     if (result == null) return;
 
     final repository = ref.read(categoryRepositoryProvider);
-    if (category == null) {
-      await repository.addCategory(
-        name: result.name,
-        type: result.type,
-        groupName: result.groupName,
-        colorValue: result.type == CategoryType.income
-            ? AppColors.incomeGreen.toARGB32()
-            : AppColors.expenseRed.toARGB32(),
+    try {
+      if (category == null) {
+        await repository.addCategory(
+          name: result.name,
+          type: result.type,
+          groupName: result.groupName,
+          colorValue: result.colorValue,
+        );
+      } else {
+        await repository.updateCategory(
+          category: category,
+          name: result.name,
+          type: result.type,
+          groupName: result.groupName,
+          colorValue: result.colorValue,
+        );
+      }
+      if (!context.mounted) return;
+      TopToast.show(
+        context,
+        category == null
+            ? 'Kategori berhasil disimpan.'
+            : 'Kategori berhasil diperbarui.',
+        type: TopToastType.success,
       );
-    } else {
-      await repository.updateCategory(category, result.name);
+    } on ArgumentError catch (error) {
+      if (!context.mounted) return;
+      TopToast.show(
+        context,
+        error.message.toString(),
+        type: TopToastType.warning,
+      );
     }
+  }
+
+  Future<void> _deleteCategory(
+    BuildContext context,
+    WidgetRef ref,
+    CategoryEntry category,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus kategori?'),
+        content: const Text(
+          'Kategori yang sudah dihapus tidak bisa dipakai lagi.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.expenseRed,
+              foregroundColor: AppColors.onDark,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final message = await ref
+        .read(categoryRepositoryProvider)
+        .deleteCategory(category);
+    if (!context.mounted) return;
+    TopToast.show(
+      context,
+      message ?? 'Kategori berhasil dihapus.',
+      type: message == null ? TopToastType.success : TopToastType.warning,
+    );
+  }
+
+  Future<void> _setCategoryArchived(
+    BuildContext context,
+    WidgetRef ref,
+    CategoryEntry category,
+    bool value,
+  ) async {
+    await ref.read(categoryRepositoryProvider).setArchived(category, value);
+    if (!context.mounted) return;
+    TopToast.show(
+      context,
+      value ? 'Kategori dinonaktifkan.' : 'Kategori diaktifkan kembali.',
+      type: TopToastType.success,
+    );
+  }
+}
+
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({required this.category, required this.onTap});
+
+  final CategoryEntry category;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: PressableSurface(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: theme.colorScheme.outline),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: AppSpacing.iconTileSmall,
+                height: AppSpacing.iconTileSmall,
+                decoration: BoxDecoration(
+                  color: Color(category.colorValue).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(
+                  Icons.category_rounded,
+                  color: Color(category.colorValue),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(category.name, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      category.type == 'income' ? 'Pemasukan' : 'Pengeluaran',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              if (category.isArchived)
+                Text(
+                  'Nonaktif',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: AppColors.warningOrange,
+                  ),
+                )
+              else if (category.isDefault)
+                Text('Bawaan', style: theme.textTheme.labelSmall),
+              const Icon(Icons.more_horiz_rounded),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -425,6 +1070,16 @@ class _CategoryDialogState extends State<_CategoryDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _groupController;
   late CategoryType _type;
+  late int _colorValue;
+
+  static const _colors = [
+    AppColors.expenseRed,
+    AppColors.incomeGreen,
+    AppColors.primary,
+    AppColors.infoBlue,
+    AppColors.warningOrange,
+    AppColors.textSecondary,
+  ];
 
   @override
   void initState() {
@@ -437,6 +1092,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
     _type = category?.type == 'income'
         ? CategoryType.income
         : CategoryType.expense;
+    _colorValue = category?.colorValue ?? AppColors.primary.toARGB32();
   }
 
   @override
@@ -452,21 +1108,27 @@ class _CategoryDialogState extends State<_CategoryDialog> {
 
     return AlertDialog(
       title: Text(editing ? 'Edit kategori' : 'Tambah kategori'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Nama kategori'),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          TextField(
-            controller: _groupController,
-            enabled: !editing,
-            decoration: const InputDecoration(labelText: 'Grup'),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          if (!editing)
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Nama kategori',
+                hintText: 'Contoh: Makanan',
+                helperText: 'Pakai nama yang singkat dan mudah dikenali.',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            TextField(
+              controller: _groupController,
+              decoration: const InputDecoration(
+                labelText: 'Grup',
+                hintText: 'Contoh: Kebutuhan Harian',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
             SegmentedButton<CategoryType>(
               segments: const [
                 ButtonSegment(
@@ -483,7 +1145,23 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                 setState(() => _type = value.first);
               },
             ),
-        ],
+            const SizedBox(height: AppSpacing.lg),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final color in _colors)
+                  ChoiceChip(
+                    label: const SizedBox(width: AppSpacing.md),
+                    selected: _colorValue == color.toARGB32(),
+                    avatar: CircleAvatar(backgroundColor: color),
+                    onSelected: (_) =>
+                        setState(() => _colorValue = color.toARGB32()),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -500,6 +1178,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                 name: name,
                 groupName: _groupController.text.trim(),
                 type: _type,
+                colorValue: _colorValue,
               ),
             );
           },
@@ -515,11 +1194,13 @@ class _CategoryFormResult {
     required this.name,
     required this.groupName,
     required this.type,
+    required this.colorValue,
   });
 
   final String name;
   final String groupName;
   final CategoryType type;
+  final int colorValue;
 }
 
 String _themeLabel(String value) {
@@ -530,5 +1211,20 @@ String _themeLabel(String value) {
       return 'Gelap';
     default:
       return 'Ikuti perangkat';
+  }
+}
+
+String _autoLockLabel(int value) {
+  switch (value) {
+    case 0:
+      return 'Langsung';
+    case 1:
+      return '1 menit';
+    case 5:
+      return '5 menit';
+    case 15:
+      return '15 menit';
+    default:
+      return '$value menit';
   }
 }

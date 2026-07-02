@@ -1,8 +1,8 @@
-# Faddompet Architecture
+# FadDompet Architecture
 
 ## 1. Architecture Overview
 
-Faddompet menggunakan arsitektur **feature-first Flutter architecture** dengan pemisahan yang jelas antara:
+FadDompet menggunakan arsitektur **feature-first Flutter architecture** dengan pemisahan yang jelas antara:
 
 - app configuration
 - core utilities
@@ -19,7 +19,7 @@ Tujuan arsitektur ini adalah menjaga project tetap:
 - cocok untuk open-source
 - aman untuk dikerjakan bersama Codex/GPT
 
-Faddompet adalah aplikasi **offline-first personal money management**, sehingga arsitektur harus memprioritaskan data lokal, performa, stabilitas, dan maintainability.
+FadDompet adalah aplikasi **offline-first personal money management**, sehingga arsitektur harus memprioritaskan data lokal, performa, stabilitas, dan maintainability.
 
 ---
 
@@ -47,7 +47,7 @@ Tidak boleh ada dependency wajib ke server untuk v1.0.
 
 ## 2.2 Android-First
 
-Target utama Faddompet adalah Android.
+Target utama FadDompet adalah Android.
 
 Web hanya digunakan untuk preview development.
 
@@ -241,7 +241,7 @@ lib/
   shared/
     layouts/
       main_shell.dart
-      faddompet_scaffold.dart
+      FadDompet_scaffold.dart
     widgets/
       empty_state.dart
       loading_state.dart
@@ -275,7 +275,7 @@ Contoh ideal:
 
 ```dart
 void main() {
-  runApp(const FaddompetApp());
+  runApp(const FadDompetApp());
 }
 ```
 
@@ -397,7 +397,7 @@ Folder `shared` berisi UI/component yang digunakan di banyak fitur.
 Contoh:
 
 * MainShell
-* FaddompetScaffold
+* FadDompetScaffold
 * PremiumBottomNav
 * EmptyState
 * LoadingState
@@ -1220,6 +1220,6 @@ Sebelum menerima pull request atau perubahan Codex, cek:
 
 ## 28. Final Architecture Statement
 
-Faddompet uses a feature-first Flutter architecture with local-first data storage, reusable premium UI components, centralized design tokens, and clear separation between app, core, data, features, and shared layers.
+FadDompet uses a feature-first Flutter architecture with local-first data storage, reusable premium UI components, centralized design tokens, and clear separation between app, core, data, features, and shared layers.
 
 The architecture must support a lightweight offline Android app that is elegant, stable, maintainable, and open-source ready.

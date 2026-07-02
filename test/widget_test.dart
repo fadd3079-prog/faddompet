@@ -8,6 +8,7 @@ import 'package:faddompet/app/providers/app_providers.dart';
 import 'package:faddompet/app/theme/app_theme.dart';
 import 'package:faddompet/data/local/database/app_database.dart';
 import 'package:faddompet/data/repositories/app_models.dart';
+import 'package:faddompet/data/repositories/security_repository.dart';
 import 'package:faddompet/features/dashboard/dashboard_page.dart';
 import 'package:faddompet/shared/widgets/premium_bottom_nav.dart';
 
@@ -16,10 +17,8 @@ void main() {
     await initializeDateFormatting('id_ID');
   });
 
-  testWidgets('Faddompet app shell renders', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      _withOverrides(const FaddompetApp()),
-    );
+  testWidgets('FadDompet app shell renders', (WidgetTester tester) async {
+    await tester.pumpWidget(_withOverrides(const FadDompetApp()));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -86,6 +85,14 @@ Widget _withOverrides(Widget child) {
       analyticsSummaryProvider.overrideWith((ref) => Stream.value(analytics)),
       budgetProgressProvider.overrideWith((ref) => const Stream.empty()),
       categoriesProvider.overrideWith((ref) => const Stream.empty()),
+      securitySettingsProvider.overrideWith(
+        (ref) async => const SecuritySettings(
+          pinEnabled: false,
+          biometricEnabled: false,
+          autoLockMinutes: 1,
+          pinLength: 6,
+        ),
+      ),
     ],
     child: child,
   );

@@ -1,54 +1,39 @@
-# FadDompet 
+# FadDompet
 
-**FadDompet** is a simple, elegant, offline-first personal money management app for students, boarding house life, and freelance income tracking.
+FadDompet adalah aplikasi pengelola uang pribadi offline untuk Android. Aplikasi ini membantu pengguna mencatat pemasukan, pengeluaran, transfer antar dompet, budget, dan cadangan data lokal tanpa akun dan tanpa internet.
 
-The name comes from **Fad** and **Dompet**. It is designed as a personal finance app that runs locally on Android, with fast transaction input, clean analytics, and a minimal Apple-like interface.
-
-## Project Status
-
-This project is currently in early development.
-
-Target version:
+## Status
 
 ```txt
-Faddompet v1.0 - Offline personal finance app for Android
-Core Features
-Offline local data storage
-Income and expense tracking
-Wallet management
-Category-based transactions
-Student and boarding house expense categories
-Freelance income tracking
-Monthly dashboard
-Analytics with charts
-Budget tracking
-Backup and export
-Minimal and elegant UI
-Planned Tech Stack
-Flutter
-Dart
-SQLite
-Drift
-Riverpod
-fl_chart
-Main Use Case
+FadDompet v1.1 - Offline personal money management app for Android
+```
 
-Faddompet is built for personal use, especially for:
+## Fitur Utama
 
-active students
-boarding house students
-freelance designers
-people who want fast and simple money tracking without cloud dependency
-Development Goals
-Fast
-Lightweight
-Stable
-Offline-first
-Simple input flow
-Minimal typing
-Clean UI
-Easy to maintain
-Open-source friendly
-License
+- Pencatatan pemasukan, pengeluaran, dan transfer
+- Dompet lokal: Tunai, E-Wallet, Rekening, Tabungan
+- Dashboard saldo dan ringkasan bulan ini
+- Riwayat transaksi dengan pencarian dan filter
+- Analitik dan budget bulanan
+- Kategori pemasukan dan pengeluaran yang bisa dikelola
+- Ekspor cadangan JSON, impor JSON, dan ekspor CSV
+- Reset data dengan konfirmasi aman
+- PIN lock, biometrik opsional, dan hide balance
+- UI Android premium yang terinspirasi iOS
 
-This project is licensed under the MIT License.
+## Prinsip Produk
+
+- Offline-first
+- Tanpa login
+- Tanpa iklan
+- Tanpa pelacakan
+- Data tersimpan di perangkat
+- Ringan untuk penggunaan harian
+
+## Target Platform
+
+Android adalah target utama. Flutter Web digunakan hanya untuk preview pengembangan.
+
+## Lisensi
+
+Project ini menggunakan lisensi MIT.

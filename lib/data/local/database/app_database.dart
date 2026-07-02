@@ -166,8 +166,9 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<TransactionEntry?> getById(int id) {
-    return (select(transactionEntries)..where((table) => table.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      transactionEntries,
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
   }
 
   Future<int> add(TransactionEntriesCompanion entry) {
@@ -240,8 +241,9 @@ class CategoriesDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<int> deleteById(int id) {
-    return (delete(categoryEntries)..where((table) => table.id.equals(id)))
-        .go();
+    return (delete(
+      categoryEntries,
+    )..where((table) => table.id.equals(id))).go();
   }
 
   Future<int> countDuplicate({
@@ -313,8 +315,9 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase> with _$BudgetsDaoMixin {
   Future<List<BudgetEntry>> getAll() => select(budgetEntries).get();
 
   Future<BudgetEntry?> getById(int id) {
-    return (select(budgetEntries)..where((table) => table.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      budgetEntries,
+    )..where((table) => table.id.equals(id))).getSingleOrNull();
   }
 
   Future<int> countDuplicate({
@@ -348,8 +351,9 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase> with _$BudgetsDaoMixin {
   }
 
   Future<int> deleteByMonth(String month) {
-    return (delete(budgetEntries)..where((table) => table.month.equals(month)))
-        .go();
+    return (delete(
+      budgetEntries,
+    )..where((table) => table.month.equals(month))).go();
   }
 }
 

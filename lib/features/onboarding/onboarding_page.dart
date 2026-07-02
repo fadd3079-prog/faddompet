@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers/app_providers.dart';
@@ -7,6 +6,7 @@ import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../core/formatters/currency_formatter.dart';
+import '../../core/formatters/rupiah_input_formatter.dart';
 import '../../data/repositories/app_models.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
@@ -35,8 +35,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final balances = <int, int>{};
     for (final wallet in wallets) {
       final raw = _balanceControllers[wallet.wallet.id]?.text ?? '';
-      final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
-      balances[wallet.wallet.id] = int.tryParse(digits) ?? 0;
+      balances[wallet.wallet.id] = CurrencyFormatter.parseRupiah(raw);
     }
 
     await ref
@@ -85,7 +84,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   Text(
-                    'Selamat datang di Faddompet',
+                    'Selamat datang di FadDompet',
                     style: theme.textTheme.displayMedium,
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -117,7 +116,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   FilledButton(
                     onPressed: _saving ? null : () => _finish(items),
                     child: Text(
-                      _saving ? 'Menyiapkan...' : 'Mulai Pakai Faddompet',
+                      _saving ? 'Menyiapkan...' : 'Mulai Pakai FadDompet',
                     ),
                   ),
                 ],
@@ -148,8 +147,9 @@ class _NameField extends StatelessWidget {
       controller: controller,
       textInputAction: TextInputAction.next,
       decoration: const InputDecoration(
-        labelText: 'Nama opsional',
-        hintText: 'Boleh dikosongkan',
+        labelText: 'Nama pengguna',
+        hintText: 'Contoh: Rina',
+        helperText: 'Nama ini hanya dipakai untuk menyapa kamu di FadDompet.',
       ),
     );
   }
@@ -193,7 +193,7 @@ class _InitialBalanceField extends StatelessWidget {
               controller: controller,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.end,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              inputFormatters: const [RupiahInputFormatter()],
               decoration: const InputDecoration(hintText: 'Rp0', isDense: true),
             ),
           ),

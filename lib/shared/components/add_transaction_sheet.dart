@@ -328,10 +328,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                           ),
                           const SizedBox(height: AppSpacing.xxxl),
                           if (_type == TransactionType.transfer)
-                          _DatePicker(
-                            selectedDate: _dateLabel,
-                            onSelected: _selectDate,
-                          ),
+                            _DatePicker(
+                              selectedDate: _dateLabel,
+                              onSelected: _selectDate,
+                            ),
                           const SizedBox(height: AppSpacing.xxxl),
                           if (_type == TransactionType.transfer)
                             _TransferFields(
@@ -453,7 +453,8 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     return wallets
         .where(
           (wallet) =>
-              !wallet.wallet.isArchived || selectedIds.contains(wallet.wallet.id),
+              !wallet.wallet.isArchived ||
+              selectedIds.contains(wallet.wallet.id),
         )
         .toList();
   }
@@ -785,8 +786,8 @@ class _NoteField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _SheetSectionTitle(
-          title: 'Catatan opsional',
-          subtitle: 'Lewati jika belum perlu.',
+          title: 'Catatan',
+          subtitle: 'Opsional, boleh dikosongkan.',
         ),
         const SizedBox(height: AppSpacing.lg),
         TextField(
@@ -798,7 +799,7 @@ class _NoteField extends StatelessWidget {
           style: theme.textTheme.bodyLarge,
           decoration: InputDecoration(
             counterText: '',
-            hintText: 'Tambahkan keterangan singkat jika perlu.',
+            hintText: 'Contoh: makan siang, bayar listrik',
             hintStyle: theme.textTheme.bodyMedium,
             filled: true,
             fillColor: isDark

@@ -158,7 +158,7 @@ class _DashboardHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(
-                  'Faddompet',
+                  'FadDompet',
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: isDark ? AppColors.softMint : AppColors.primary,
                   ),

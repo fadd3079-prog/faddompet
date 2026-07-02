@@ -94,11 +94,13 @@ class BackupRepository {
   }
 
   Future<void> resetData() async {
-    await _database.backupDao.clearUserData();
-    final now = DateTime.now();
-    await _database.seedDao.insertWallets(DefaultSeedData.wallets(now));
-    await _database.seedDao.insertCategories(DefaultSeedData.categories(now));
-    await _database.seedDao.insertSettings(DefaultSeedData.settings(now));
+    await _database.transaction(() async {
+      await _database.backupDao.clearUserData();
+      final now = DateTime.now();
+      await _database.seedDao.insertWallets(DefaultSeedData.wallets(now));
+      await _database.seedDao.insertCategories(DefaultSeedData.categories(now));
+      await _database.seedDao.insertSettings(DefaultSeedData.settings(now));
+    });
   }
 
   Future<Map<String, dynamic>> _backupPayload() async {

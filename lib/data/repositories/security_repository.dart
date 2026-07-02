@@ -97,10 +97,8 @@ class SecurityRepository {
     }
     return _localAuth.authenticate(
       localizedReason: 'Buka FadDompet dengan biometrik',
-      options: const AuthenticationOptions(
-        biometricOnly: true,
-        stickyAuth: false,
-      ),
+      biometricOnly: true,
+      persistAcrossBackgrounding: false,
     );
   }
 

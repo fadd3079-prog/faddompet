@@ -1,8 +1,8 @@
-# Faddompet Design System
+# FadDompet Design System
 
 ## 1. Design Direction
 
-Faddompet menggunakan pendekatan visual **iOS-inspired premium mobile interface** yang diadaptasi untuk Android.
+FadDompet menggunakan pendekatan visual **iOS-inspired premium mobile interface** yang diadaptasi untuk Android.
 
 Arah desain ini mengambil inspirasi dari kualitas visual iOS modern seperti:
 
@@ -16,7 +16,7 @@ Arah desain ini mengambil inspirasi dari kualitas visual iOS modern seperti:
 - interaksi yang terasa natural
 - fokus pada konten utama
 
-Namun Faddompet **bukan clone iOS**, bukan Apple Wallet clone, dan bukan aplikasi yang memaksakan pola iPhone mentah ke Android.
+Namun FadDompet **bukan clone iOS**, bukan Apple Wallet clone, dan bukan aplikasi yang memaksakan pola iPhone mentah ke Android.
 
 Targetnya adalah:
 
@@ -26,7 +26,7 @@ Targetnya adalah:
 
 ## 2. Design Personality
 
-Faddompet harus terasa:
+FadDompet harus terasa:
 
 - calm
 - premium
@@ -39,7 +39,7 @@ Faddompet harus terasa:
 - lightweight
 - personal
 
-Faddompet tidak boleh terasa:
+FadDompet tidak boleh terasa:
 
 - generic AI dashboard
 - template SaaS analytics
@@ -57,7 +57,7 @@ Faddompet tidak boleh terasa:
 
 ## 3. Product Feel
 
-Ketika pengguna membuka Faddompet, kesan yang harus muncul:
+Ketika pengguna membuka FadDompet, kesan yang harus muncul:
 
 1. Uang saya mudah dipahami.
 2. Aplikasi ini ringan dan cepat.
@@ -205,7 +205,7 @@ Hindari:
 
 ## 6.1 Brand Palette
 
-Primary brand Faddompet:
+Primary brand FadDompet:
 
 ```txt
 Primary Teal       #0F766E
@@ -409,7 +409,7 @@ Button vertical padding         14-18
 Bottom sheet padding            20-28
 ```
 
-UI Faddompet harus terasa lega. Jangan padat seperti aplikasi admin dashboard.
+UI FadDompet harus terasa lega. Jangan padat seperti aplikasi admin dashboard.
 
 ---
 
@@ -485,16 +485,16 @@ Do not:
 
 ## 11. Component System
 
-Faddompet harus memakai custom reusable components. Jangan terlalu bergantung pada widget default tanpa styling.
+FadDompet harus memakai custom reusable components. Jangan terlalu bergantung pada widget default tanpa styling.
 
 ## 11.1 Required Components
 
 Komponen inti:
 
 ```txt
-FaddompetApp
+FadDompetApp
 MainShell
-FaddompetScaffold
+FadDompetScaffold
 PremiumBottomNav
 BalanceHeroCard
 MoneyMetricCard
@@ -812,7 +812,7 @@ Group settings:
 * Tampilan
 * Data & Backup
 * Keamanan
-* Tentang Faddompet
+* Tentang FadDompet
 
 List tile harus:
 
@@ -839,7 +839,7 @@ Contoh tone:
 
 ```txt
 Belum ada transaksi
-Tambahkan transaksi pertama agar Faddompet bisa mulai membaca pola keuanganmu.
+Tambahkan transaksi pertama agar FadDompet bisa mulai membaca pola keuanganmu.
 ```
 
 Empty state tidak boleh terasa seperti halaman rusak atau kosong.
@@ -927,7 +927,7 @@ Microcopy harus membantu.
 Contoh baik:
 
 ```txt
-Tambahkan transaksi pertama agar Faddompet bisa membaca pola keuanganmu.
+Tambahkan transaksi pertama agar FadDompet bisa membaca pola keuanganmu.
 Budget makan sudah terpakai 80%.
 Pengeluaran bulan ini lebih rendah dari bulan lalu.
 ```
@@ -1107,7 +1107,7 @@ Jangan:
 
 ## 28. Accessibility Rules
 
-Faddompet harus memperhatikan:
+FadDompet harus memperhatikan:
 
 * kontras teks
 * touch target
@@ -1223,6 +1223,6 @@ Setiap screen harus memenuhi standar:
 
 ## 32. Final Design Statement
 
-Faddompet should feel like a calm, premium, iOS-inspired personal finance app adapted for Android. It must prioritize fast input, readable financial information, soft visual hierarchy, elegant surfaces, smooth motion, and offline-first practicality.
+FadDompet should feel like a calm, premium, iOS-inspired personal finance app adapted for Android. It must prioritize fast input, readable financial information, soft visual hierarchy, elegant surfaces, smooth motion, and offline-first practicality.
 
 The design must never look like a generic AI-generated dashboard or default Flutter Material app.

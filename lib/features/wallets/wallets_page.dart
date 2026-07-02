@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers/app_providers.dart';
@@ -105,12 +104,18 @@ class WalletsPage extends ConsumerWidget {
       if (!context.mounted) return;
       TopToast.show(
         context,
-        wallet == null ? 'Dompet berhasil disimpan.' : 'Dompet berhasil diperbarui.',
+        wallet == null
+            ? 'Dompet berhasil disimpan.'
+            : 'Dompet berhasil diperbarui.',
         type: TopToastType.success,
       );
     } on ArgumentError catch (error) {
       if (!context.mounted) return;
-      TopToast.show(context, error.message.toString(), type: TopToastType.warning);
+      TopToast.show(
+        context,
+        error.message.toString(),
+        type: TopToastType.warning,
+      );
     }
   }
 
@@ -144,22 +149,35 @@ class WalletsPage extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(wallet.wallet.name, style: theme.textTheme.headlineSmall),
+                    Text(
+                      wallet.wallet.name,
+                      style: theme.textTheme.headlineSmall,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      wallet.wallet.isArchived ? '${type.label} tidak aktif' : type.label,
+                      wallet.wallet.isArchived
+                          ? '${type.label} tidak aktif'
+                          : type.label,
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                     Text(
-                      CurrencyFormatter.rupiah(wallet.balance, hidden: hideBalance),
+                      CurrencyFormatter.rupiah(
+                        wallet.balance,
+                        hidden: hideBalance,
+                      ),
                       style: theme.textTheme.displayMedium,
                     ),
                     const SizedBox(height: AppSpacing.xxl),
-                    _WalletInfoRow(label: 'Transaksi', value: '$count transaksi'),
+                    _WalletInfoRow(
+                      label: 'Transaksi',
+                      value: '$count transaksi',
+                    ),
                     _WalletInfoRow(
                       label: 'Saldo awal',
-                      value: CurrencyFormatter.rupiah(wallet.wallet.initialBalance),
+                      value: CurrencyFormatter.rupiah(
+                        wallet.wallet.initialBalance,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     Row(
@@ -185,9 +203,19 @@ class WalletsPage extends ConsumerWidget {
                             onPressed: () {
                               Navigator.pop(sheetContext);
                               if (wallet.wallet.isArchived) {
-                                _archiveWallet(context, ref, wallet.wallet, false);
+                                _archiveWallet(
+                                  context,
+                                  ref,
+                                  wallet.wallet,
+                                  false,
+                                );
                               } else if (count > 0) {
-                                _archiveWallet(context, ref, wallet.wallet, true);
+                                _archiveWallet(
+                                  context,
+                                  ref,
+                                  wallet.wallet,
+                                  true,
+                                );
                               } else {
                                 _deleteWallet(context, ref, wallet.wallet);
                               }
@@ -365,7 +393,10 @@ class _WalletInfoRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         children: [
-          SizedBox(width: 92, child: Text(label, style: theme.textTheme.labelLarge)),
+          SizedBox(
+            width: 92,
+            child: Text(label, style: theme.textTheme.labelLarge),
+          ),
           Expanded(child: Text(value, style: theme.textTheme.bodyLarge)),
         ],
       ),

@@ -1,12 +1,12 @@
-# Faddompet PRD
+# FadDompet PRD
 
 ## 1. Product Overview
 
-**Faddompet** adalah aplikasi mobile personal money management untuk mencatat, memantau, dan menganalisis keuangan pribadi secara cepat, ringan, dan offline.
+**FadDompet** adalah aplikasi mobile personal money management untuk mencatat, memantau, dan menganalisis keuangan pribadi secara cepat, ringan, dan offline.
 
-Nama Faddompet berasal dari gabungan **Fadd** dan **Dompet**. Aplikasi ini dibuat untuk penggunaan pribadi, terutama sebagai mahasiswa aktif, anak kos, dan freelance desainer/video editor yang memiliki pemasukan dari beberapa sumber serta pengeluaran harian yang perlu dipantau secara rapi.
+Nama FadDompet berasal dari gabungan **Fadd** dan **Dompet**. Aplikasi ini dibuat untuk penggunaan pribadi, terutama sebagai mahasiswa aktif, anak kos, dan freelance desainer/video editor yang memiliki pemasukan dari beberapa sumber serta pengeluaran harian yang perlu dipantau secara rapi.
 
-Faddompet bukan aplikasi akuntansi kompleks, bukan aplikasi bank, dan bukan platform finansial online. Fokus utamanya adalah membantu pengguna memahami kondisi uang pribadi secara cepat: saldo tersisa, pemasukan bulan ini, pengeluaran bulan ini, kategori paling boros, budget, dan riwayat transaksi.
+FadDompet bukan aplikasi akuntansi kompleks, bukan aplikasi bank, dan bukan platform finansial online. Fokus utamanya adalah membantu pengguna memahami kondisi uang pribadi secara cepat: saldo tersisa, pemasukan bulan ini, pengeluaran bulan ini, kategori paling boros, budget, dan riwayat transaksi.
 
 Aplikasi harus terasa **simple, elegant, premium, cepat, stabil, offline-first, dan iOS-like**, tetapi tetap nyaman digunakan di Android.
 
@@ -16,7 +16,7 @@ Aplikasi harus terasa **simple, elegant, premium, cepat, stabil, offline-first, 
 
 Membuat aplikasi pengelola keuangan pribadi yang terasa seperti aplikasi bawaan sistem modern: ringan, cepat, bersih, visualnya elegan, dan tidak membuat pengguna malas mencatat transaksi.
 
-Faddompet harus membantu pengguna menjawab pertanyaan utama dalam beberapa detik:
+FadDompet harus membantu pengguna menjawab pertanyaan utama dalam beberapa detik:
 
 - Uang saya sekarang tersisa berapa?
 - Bulan ini saya sudah keluar uang berapa?
@@ -111,7 +111,7 @@ Masalah utama bukan hanya mencatat transaksi, tetapi membuat proses mencatat men
 
 ## 6. Non-Goals
 
-Faddompet v1.0 tidak bertujuan menjadi:
+FadDompet v1.0 tidak bertujuan menjadi:
 
 - Aplikasi bank.
 - Aplikasi investasi.
@@ -204,7 +204,7 @@ Dashboard harus menjawab kondisi keuangan pengguna secara cepat dan visual.
 
 ## 8.3 Transaction Input
 
-Faddompet harus mengutamakan input transaksi yang cepat.
+FadDompet harus mengutamakan input transaksi yang cepat.
 
 Jenis transaksi:
 
@@ -507,7 +507,7 @@ Contoh:
 
 ## 10.1 Design Personality
 
-Faddompet harus terasa:
+FadDompet harus terasa:
 
 - iOS-like
 - Premium
@@ -543,7 +543,7 @@ Prinsip visual:
 
 ## 10.3 Anti-Generic UI Rules
 
-Faddompet tidak boleh terlihat seperti:
+FadDompet tidak boleh terlihat seperti:
 
 - Default Flutter counter app
 - Default Material purple theme
@@ -582,7 +582,7 @@ Yang tidak boleh disalin mentah:
 - Apple Wallet clone
 - iOS-only interaction yang aneh di Android
 
-Faddompet harus menjadi aplikasi Android yang terinspirasi iOS, bukan aplikasi yang pura-pura menjadi iPhone.
+FadDompet harus menjadi aplikasi Android yang terinspirasi iOS, bukan aplikasi yang pura-pura menjadi iPhone.
 
 ---
 
@@ -687,7 +687,7 @@ Rules:
 
 ## 13. Performance Requirements
 
-Faddompet harus:
+FadDompet harus:
 
 - Cepat dibuka
 - Tidak berat saat scroll
@@ -708,7 +708,7 @@ Target pengalaman:
 
 ## 14. Accessibility Requirements
 
-Faddompet harus memperhatikan:
+FadDompet harus memperhatikan:
 
 - Kontras teks yang cukup
 - Ukuran teks nyaman dibaca
@@ -722,7 +722,7 @@ Faddompet harus memperhatikan:
 
 ## 15. Open Source Requirements
 
-Karena Faddompet akan diunggah sebagai repo open-source, project harus memiliki:
+Karena FadDompet akan diunggah sebagai repo open-source, project harus memiliki:
 
 - README.md
 - LICENSE
@@ -750,7 +750,7 @@ Kode harus:
 
 ## 16.1 Version 1.0 Scope
 
-Faddompet v1.0 dianggap layak digunakan jika sudah memiliki:
+FadDompet v1.0 dianggap layak digunakan jika sudah memiliki:
 
 - Onboarding
 - Dashboard
@@ -806,7 +806,7 @@ Scope:
 
 Output:
 
-- UI awal sudah terasa seperti Faddompet, bukan Flutter starter app.
+- UI awal sudah terasa seperti FadDompet, bukan Flutter starter app.
 
 ---
 
@@ -906,13 +906,13 @@ Scope:
 
 Output:
 
-- Faddompet siap dipakai pribadi dan dipublikasikan sebagai open-source project.
+- FadDompet siap dipakai pribadi dan dipublikasikan sebagai open-source project.
 
 ---
 
 ## 18. Success Metrics
 
-Faddompet berhasil jika:
+FadDompet berhasil jika:
 
 - Pengguna bisa mencatat transaksi harian tanpa merasa ribet.
 - Aplikasi bisa dipakai offline.
@@ -938,7 +938,7 @@ Setiap perubahan UI harus melewati pertanyaan berikut:
 7. Apakah ini nyaman digunakan di Android?
 8. Apakah animasi membantu, bukan mengganggu?
 9. Apakah input masih cepat?
-10. Apakah ini sesuai karakter Faddompet?
+10. Apakah ini sesuai karakter FadDompet?
 
 Jika jawabannya lemah, desain harus direvisi.
 
@@ -946,6 +946,6 @@ Jika jawabannya lemah, desain harus direvisi.
 
 ## 20. Final Product Statement
 
-Faddompet is an offline-first personal money management app for Android, designed for students, boarding house life, and freelance income tracking. It focuses on fast transaction input, clear financial summaries, useful analytics, and a premium iOS-inspired interface adapted for Android.
+FadDompet is an offline-first personal money management app for Android, designed for students, boarding house life, and freelance income tracking. It focuses on fast transaction input, clear financial summaries, useful analytics, and a premium iOS-inspired interface adapted for Android.
 
 The app must be private, lightweight, stable, elegant, and practical for daily use.

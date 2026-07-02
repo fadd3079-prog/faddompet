@@ -9,8 +9,8 @@ import '../shared/widgets/loading_state.dart';
 import 'providers/app_providers.dart';
 import 'theme/app_theme.dart';
 
-class FaddompetApp extends ConsumerWidget {
-  const FaddompetApp({super.key});
+class FadDompetApp extends ConsumerWidget {
+  const FadDompetApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

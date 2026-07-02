@@ -73,7 +73,9 @@ class _TopToastContent extends StatelessWidget {
           },
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: AppSpacing.webMaxWidth),
+              constraints: const BoxConstraints(
+                maxWidth: AppSpacing.webMaxWidth,
+              ),
               child: Material(
                 color: Colors.transparent,
                 child: Container(
@@ -82,7 +84,9 @@ class _TopToastContent extends StatelessWidget {
                     vertical: AppSpacing.md,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
+                    color: isDark
+                        ? AppColors.darkSurfaceElevated
+                        : AppColors.surface,
                     borderRadius: BorderRadius.circular(AppRadius.full),
                     border: Border.all(color: color.withValues(alpha: 0.24)),
                     boxShadow: AppShadows.nav(brightness),
@@ -104,7 +108,9 @@ class _TopToastContent extends StatelessWidget {
                           message,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.labelLarge?.copyWith(color: color),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: color,
+                          ),
                         ),
                       ),
                     ],

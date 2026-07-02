@@ -90,7 +90,8 @@ class AnalyticsPage extends ConsumerWidget {
             budgets.when(
               data: (items) => _BudgetSection(
                 items: items,
-                onEdit: (item) => _showBudgetDialog(context, ref, categories, item),
+                onEdit: (item) =>
+                    _showBudgetDialog(context, ref, categories, item),
                 onDelete: (item) => _confirmDeleteBudget(context, ref, item),
                 onReset: () => _confirmResetBudget(context, ref),
               ),
@@ -111,14 +112,11 @@ class AnalyticsPage extends ConsumerWidget {
     WidgetRef ref,
     List<CategoryEntry> categories, [
     BudgetProgress? existing,
-  ]
-  ) async {
+  ]) async {
     final result = await showDialog<_BudgetFormResult>(
       context: context,
-      builder: (context) => _BudgetDialog(
-        categories: categories,
-        existing: existing,
-      ),
+      builder: (context) =>
+          _BudgetDialog(categories: categories, existing: existing),
     );
     if (result == null) return;
 
@@ -134,12 +132,18 @@ class AnalyticsPage extends ConsumerWidget {
       if (!context.mounted) return;
       TopToast.show(
         context,
-        existing == null ? 'Budget berhasil disimpan.' : 'Budget berhasil diperbarui.',
+        existing == null
+            ? 'Budget berhasil disimpan.'
+            : 'Budget berhasil diperbarui.',
         type: TopToastType.success,
       );
     } on ArgumentError catch (error) {
       if (!context.mounted) return;
-      TopToast.show(context, error.message.toString(), type: TopToastType.warning);
+      TopToast.show(
+        context,
+        error.message.toString(),
+        type: TopToastType.warning,
+      );
     }
   }
 
@@ -172,7 +176,11 @@ class AnalyticsPage extends ConsumerWidget {
     if (confirmed != true) return;
     await ref.read(budgetRepositoryProvider).delete(item.budget.id);
     if (!context.mounted) return;
-    TopToast.show(context, 'Budget berhasil dihapus.', type: TopToastType.success);
+    TopToast.show(
+      context,
+      'Budget berhasil dihapus.',
+      type: TopToastType.success,
+    );
   }
 
   Future<void> _confirmResetBudget(BuildContext context, WidgetRef ref) async {
@@ -204,7 +212,11 @@ class AnalyticsPage extends ConsumerWidget {
         .read(budgetRepositoryProvider)
         .resetMonth(DateFormatter.monthKey(DateTime.now()));
     if (!context.mounted) return;
-    TopToast.show(context, 'Budget bulan ini direset.', type: TopToastType.success);
+    TopToast.show(
+      context,
+      'Budget bulan ini direset.',
+      type: TopToastType.success,
+    );
   }
 }
 
@@ -574,7 +586,9 @@ class _BudgetDialogState extends State<_BudgetDialog> {
           DropdownButtonFormField<int?>(
             initialValue: _categoryId,
             decoration: const InputDecoration(labelText: 'Cakupan'),
-            onChanged: editing ? null : (value) => setState(() => _categoryId = value),
+            onChanged: editing
+                ? null
+                : (value) => setState(() => _categoryId = value),
             items: [
               const DropdownMenuItem<int?>(
                 value: null,
