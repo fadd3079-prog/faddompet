@@ -19,6 +19,28 @@ class SecuritySettings {
   final int pinLength;
 }
 
+class PinAttemptState {
+  const PinAttemptState({
+    required this.failedAttempts,
+    required this.cooldownUntil,
+  });
+
+  final int failedAttempts;
+  final DateTime? cooldownUntil;
+
+  bool get isCoolingDown {
+    final until = cooldownUntil;
+    return until != null && DateTime.now().isBefore(until);
+  }
+
+  Duration get remainingCooldown {
+    final until = cooldownUntil;
+    if (until == null) return Duration.zero;
+    final remaining = until.difference(DateTime.now());
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+}
+
 class SecurityRepository {
   SecurityRepository({
     FlutterSecureStorage? storage,
@@ -34,6 +56,10 @@ class SecurityRepository {
   static const _pinLengthKey = 'security_pin_length';
   static const _biometricKey = 'security_biometric_enabled';
   static const _autoLockKey = 'security_auto_lock_minutes';
+  static const _failedAttemptsKey = 'security_failed_attempts';
+  static const _cooldownUntilKey = 'security_cooldown_until';
+  static const _maxFailedAttempts = 5;
+  static const _cooldown = Duration(seconds: 30);
 
   Future<SecuritySettings> loadSettings() async {
     final hash = await _storage.read(key: _pinHashKey);
@@ -68,6 +94,8 @@ class SecurityRepository {
     await _storage.delete(key: _pinSaltKey);
     await _storage.delete(key: _pinLengthKey);
     await _storage.delete(key: _biometricKey);
+    await _storage.delete(key: _autoLockKey);
+    await clearPinAttemptState();
   }
 
   Future<void> setBiometricEnabled(bool value) async {
@@ -100,6 +128,51 @@ class SecurityRepository {
       biometricOnly: true,
       persistAcrossBackgrounding: false,
     );
+  }
+
+  Future<PinAttemptState> loadPinAttemptState() async {
+    final failedAttempts = int.tryParse(
+      await _storage.read(key: _failedAttemptsKey) ?? '',
+    );
+    final cooldownValue = await _storage.read(key: _cooldownUntilKey);
+    final cooldownUntil = cooldownValue == null
+        ? null
+        : DateTime.tryParse(cooldownValue);
+
+    if (cooldownUntil != null && !DateTime.now().isBefore(cooldownUntil)) {
+      await clearPinAttemptState();
+      return const PinAttemptState(failedAttempts: 0, cooldownUntil: null);
+    }
+
+    return PinAttemptState(
+      failedAttempts: failedAttempts ?? 0,
+      cooldownUntil: cooldownUntil,
+    );
+  }
+
+  Future<PinAttemptState> registerFailedPinAttempt() async {
+    final state = await loadPinAttemptState();
+    if (state.isCoolingDown) return state;
+
+    final attempts = state.failedAttempts + 1;
+    if (attempts >= _maxFailedAttempts) {
+      final cooldownUntil = DateTime.now().add(_cooldown);
+      await _storage.delete(key: _failedAttemptsKey);
+      await _storage.write(
+        key: _cooldownUntilKey,
+        value: cooldownUntil.toIso8601String(),
+      );
+      return PinAttemptState(failedAttempts: 0, cooldownUntil: cooldownUntil);
+    }
+
+    await _storage.write(key: _failedAttemptsKey, value: attempts.toString());
+    await _storage.delete(key: _cooldownUntilKey);
+    return PinAttemptState(failedAttempts: attempts, cooldownUntil: null);
+  }
+
+  Future<void> clearPinAttemptState() async {
+    await _storage.delete(key: _failedAttemptsKey);
+    await _storage.delete(key: _cooldownUntilKey);
   }
 
   void _validatePin(String pin) {

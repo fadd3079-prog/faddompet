@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -97,8 +99,13 @@ class _AppLockGateState extends ConsumerState<AppLockGate>
           ],
         );
       },
-      loading: () => widget.child,
-      error: (_, _) => widget.child,
+      loading: () =>
+          const _SecurityStatusScreen(message: 'Memeriksa keamanan...'),
+      error: (_, _) => _SecurityStatusScreen(
+        message: 'Keamanan belum bisa diperiksa.',
+        actionLabel: 'Coba lagi',
+        onAction: () => ref.invalidate(securitySettingsProvider),
+      ),
     );
   }
 }
@@ -117,9 +124,40 @@ class _AppLockScreenState extends ConsumerState<_AppLockScreen> {
   String _pin = '';
   String? _message;
   bool _checking = false;
+  DateTime? _cooldownUntil;
+  Timer? _cooldownTimer;
+
+  bool get _isCoolingDown {
+    final until = _cooldownUntil;
+    return until != null && DateTime.now().isBefore(until);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAttemptState();
+  }
+
+  @override
+  void dispose() {
+    _cooldownTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadAttemptState() async {
+    final state = await ref
+        .read(securityRepositoryProvider)
+        .loadPinAttemptState();
+    if (!mounted || !state.isCoolingDown) return;
+    _activateCooldown(state.cooldownUntil!);
+  }
 
   Future<void> _append(String value) async {
-    if (_checking || _pin.length >= widget.settings.pinLength) return;
+    if (_checking ||
+        _isCoolingDown ||
+        _pin.length >= widget.settings.pinLength) {
+      return;
+    }
     HapticFeedback.selectionClick();
     setState(() {
       _pin += value;
@@ -131,7 +169,7 @@ class _AppLockScreenState extends ConsumerState<_AppLockScreen> {
   }
 
   void _backspace() {
-    if (_checking || _pin.isEmpty) return;
+    if (_checking || _isCoolingDown || _pin.isEmpty) return;
     HapticFeedback.selectionClick();
     setState(() {
       _pin = _pin.substring(0, _pin.length - 1);
@@ -141,26 +179,46 @@ class _AppLockScreenState extends ConsumerState<_AppLockScreen> {
 
   Future<void> _verify() async {
     setState(() => _checking = true);
-    final ok = await ref.read(securityRepositoryProvider).verifyPin(_pin);
+    final repository = ref.read(securityRepositoryProvider);
+    final attemptState = await repository.loadPinAttemptState();
+    if (!mounted) return;
+    if (attemptState.isCoolingDown) {
+      _activateCooldown(attemptState.cooldownUntil!);
+      return;
+    }
+
+    final ok = await repository.verifyPin(_pin);
     if (!mounted) return;
     if (ok) {
+      await repository.clearPinAttemptState();
+      if (!mounted) return;
       widget.onUnlocked();
       return;
     }
-    setState(() {
-      _pin = '';
-      _message = 'PIN tidak sesuai.';
-      _checking = false;
-    });
+
+    final failedState = await repository.registerFailedPinAttempt();
+    if (!mounted) return;
+    if (failedState.isCoolingDown) {
+      _activateCooldown(failedState.cooldownUntil!);
+    } else {
+      setState(() {
+        _pin = '';
+        _message = 'PIN tidak sesuai.';
+        _checking = false;
+      });
+    }
   }
 
   Future<void> _biometric() async {
+    if (_checking || _isCoolingDown) return;
     try {
       final ok = await ref
           .read(securityRepositoryProvider)
           .unlockWithBiometric();
       if (!mounted) return;
       if (ok) {
+        await ref.read(securityRepositoryProvider).clearPinAttemptState();
+        if (!mounted) return;
         widget.onUnlocked();
       }
     } on ArgumentError catch (error) {
@@ -170,6 +228,27 @@ class _AppLockScreenState extends ConsumerState<_AppLockScreen> {
       if (!mounted) return;
       setState(() => _message = 'Gunakan PIN untuk membuka FadDompet.');
     }
+  }
+
+  void _activateCooldown(DateTime until) {
+    _cooldownTimer?.cancel();
+    setState(() {
+      _cooldownUntil = until;
+      _pin = '';
+      _checking = false;
+      _message = 'Terlalu banyak percobaan. Coba lagi sebentar.';
+    });
+    final remaining = until.difference(DateTime.now());
+    _cooldownTimer = Timer(
+      remaining.isNegative ? Duration.zero : remaining,
+      () {
+        if (!mounted) return;
+        setState(() {
+          _cooldownUntil = null;
+          _message = null;
+        });
+      },
+    );
   }
 
   @override
@@ -240,13 +319,17 @@ class _AppLockScreenState extends ConsumerState<_AppLockScreen> {
                   ),
                   if (widget.settings.biometricEnabled) ...[
                     TextButton.icon(
-                      onPressed: _biometric,
+                      onPressed: _isCoolingDown ? null : _biometric,
                       icon: const Icon(Icons.fingerprint_rounded),
                       label: const Text('Buka dengan biometrik'),
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  _PinKeypad(onDigit: _append, onBackspace: _backspace),
+                  _PinKeypad(
+                    enabled: !_isCoolingDown,
+                    onDigit: _append,
+                    onBackspace: _backspace,
+                  ),
                   const Spacer(),
                 ],
               ),
@@ -259,8 +342,13 @@ class _AppLockScreenState extends ConsumerState<_AppLockScreen> {
 }
 
 class _PinKeypad extends StatelessWidget {
-  const _PinKeypad({required this.onDigit, required this.onBackspace});
+  const _PinKeypad({
+    required this.enabled,
+    required this.onDigit,
+    required this.onBackspace,
+  });
 
+  final bool enabled;
   final ValueChanged<String> onDigit;
   final VoidCallback onBackspace;
 
@@ -281,6 +369,7 @@ class _PinKeypad extends StatelessWidget {
                   child: value.isEmpty
                       ? const SizedBox(height: AppSpacing.huge + AppSpacing.md)
                       : _PinKey(
+                          enabled: enabled,
                           value: value,
                           onDigit: onDigit,
                           onBackspace: onBackspace,
@@ -300,11 +389,13 @@ class _PinKeypad extends StatelessWidget {
 
 class _PinKey extends StatelessWidget {
   const _PinKey({
+    required this.enabled,
     required this.value,
     required this.onDigit,
     required this.onBackspace,
   });
 
+  final bool enabled;
   final String value;
   final ValueChanged<String> onDigit;
   final VoidCallback onBackspace;
@@ -317,6 +408,7 @@ class _PinKey extends StatelessWidget {
     final isDark = theme.colorScheme.brightness == Brightness.dark;
 
     return PressableSurface(
+      enabled: enabled,
       onTap: _isBackspace ? onBackspace : () => onDigit(value),
       child: Container(
         constraints: const BoxConstraints(
@@ -331,6 +423,51 @@ class _PinKey extends StatelessWidget {
         child: _isBackspace
             ? Icon(Icons.backspace_outlined, color: theme.colorScheme.primary)
             : Text(value, style: theme.textTheme.titleLarge),
+      ),
+    );
+  }
+}
+
+class _SecurityStatusScreen extends StatelessWidget {
+  const _SecurityStatusScreen({
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.colorScheme.brightness == Brightness.dark;
+
+    return Material(
+      color: isDark ? AppColors.darkBackground : AppColors.background,
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.screen),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppBrandMark(size: 56, radius: AppRadius.lg),
+                const SizedBox(height: AppSpacing.xl),
+                Text(
+                  message,
+                  style: theme.textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                if (actionLabel != null && onAction != null) ...[
+                  const SizedBox(height: AppSpacing.xl),
+                  FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

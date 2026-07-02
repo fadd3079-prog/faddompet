@@ -1,14 +1,24 @@
-﻿# Changelog
+# Changelog
 
-All notable changes to Faddompet will be documented in this file.
+All notable changes to FadDompet will be documented in this file.
 
 ## Unreleased
 
+### Security
+
+- Hardened local app lock behavior.
+- Documented offline trust model and backup safety.
+- Prepared release signing configuration for local keystore use.
+
+### Changed
+
+- Improved release hygiene and documentation for GitHub APK distribution.
+- Kept branding consistent as FadDompet in public documentation.
+
+## 1.1.0
+
 ### Added
 
-- Initial open-source project structure
-- README
-- MIT License
-- Roadmap
-- Contribution guide
-- Git ignore configuration
+- Offline transaction, wallet, category, budget, analytics, backup, and settings features.
+- PIN lock, optional biometric unlock, and hide balance.
+- MIT License.

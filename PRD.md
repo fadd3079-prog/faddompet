@@ -4,7 +4,7 @@
 
 **FadDompet** adalah aplikasi mobile personal money management untuk mencatat, memantau, dan menganalisis keuangan pribadi secara cepat, ringan, dan offline.
 
-Nama FadDompet berasal dari gabungan **Fadd** dan **Dompet**. Aplikasi ini dibuat untuk penggunaan pribadi, terutama sebagai mahasiswa aktif, anak kos, dan freelance desainer/video editor yang memiliki pemasukan dari beberapa sumber serta pengeluaran harian yang perlu dipantau secara rapi.
+Nama FadDompet berasal dari gabungan **Fadd** dan **Dompet**. Aplikasi ini dibuat untuk penggunaan keuangan pribadi sehari-hari, terutama bagi pengguna yang ingin mencatat pemasukan, pengeluaran, dompet, dan budget tanpa akun online atau proses yang rumit.
 
 FadDompet bukan aplikasi akuntansi kompleks, bukan aplikasi bank, dan bukan platform finansial online. Fokus utamanya adalah membantu pengguna memahami kondisi uang pribadi secara cepat: saldo tersisa, pemasukan bulan ini, pengeluaran bulan ini, kategori paling boros, budget, dan riwayat transaksi.
 
@@ -33,11 +33,9 @@ FadDompet harus membantu pengguna menjawab pertanyaan utama dalam beberapa detik
 
 Pengguna utama adalah:
 
-- Mahasiswa aktif
-- Anak kos
-- Freelance graphic designer / video editor
-- Pengguna Android
-- Mengelola uang saku, uang freelance, dan pengeluaran harian
+- Pengguna Android yang ingin mencatat keuangan pribadi
+- Pengguna yang mengelola pemasukan, pengeluaran, transfer, dan budget harian
+- Pengguna yang ingin aplikasi sederhana tanpa akun online
 - Ingin aplikasi offline dan privat
 - Tidak ingin terlalu banyak mengetik
 - Butuh dashboard visual yang mudah dibaca
@@ -64,7 +62,7 @@ Pengguna membutuhkan aplikasi pencatat keuangan yang:
 4. Memiliki dashboard dan analytics yang jelas.
 5. Tidak terasa seperti spreadsheet atau aplikasi akuntansi berat.
 6. Tidak memiliki UI generik seperti template dashboard biasa.
-7. Cocok untuk pola hidup mahasiswa, anak kos, dan freelancer.
+7. Cocok untuk berbagai kebutuhan keuangan pribadi sehari-hari.
 
 Masalah utama bukan hanya mencatat transaksi, tetapi membuat proses mencatat menjadi cukup mudah sehingga pengguna mau melakukannya setiap hari.
 
@@ -117,7 +115,7 @@ FadDompet v1.0 tidak bertujuan menjadi:
 - Aplikasi investasi.
 - Aplikasi crypto.
 - Aplikasi akuntansi profesional.
-- Aplikasi invoice freelance lengkap.
+- Aplikasi invoice lengkap.
 - Aplikasi pajak.
 - Aplikasi multi-user.
 - Aplikasi cloud finance.
@@ -269,7 +267,7 @@ Default kategori pengeluaran:
 - Liburan
 - Digital/Software
 - Kuota
-- Freelance Tools
+- Peralatan Kerja
 - Sosial/Donasi
 - Lainnya
 
@@ -780,7 +778,7 @@ Fitur berikut tidak masuk v1.0:
 - Firebase/Supabase
 - OCR struk
 - AI financial assistant
-- Invoice freelance lengkap
+- Invoice lengkap
 - Tax report
 - Bank integration
 - Subscription tracking otomatis
@@ -946,6 +944,6 @@ Jika jawabannya lemah, desain harus direvisi.
 
 ## 20. Final Product Statement
 
-FadDompet is an offline-first personal money management app for Android, designed for students, boarding house life, and freelance income tracking. It focuses on fast transaction input, clear financial summaries, useful analytics, and a premium iOS-inspired interface adapted for Android.
+FadDompet is an offline-first personal money management app for Android, designed for everyday income, expense, wallet, and budget tracking. It focuses on fast transaction input, clear financial summaries, useful analytics, and a premium iOS-inspired interface adapted for Android.
 
 The app must be private, lightweight, stable, elegant, and practical for daily use.

@@ -376,6 +376,8 @@ class SettingsPage extends ConsumerWidget {
                     'Simpan salinan data agar mudah dipulihkan saat ganti HP.',
               ),
               const SizedBox(height: AppSpacing.lg),
+              const _BackupSecurityNotice(),
+              const SizedBox(height: AppSpacing.lg),
               _SheetOption(
                 icon: Icons.ios_share_rounded,
                 title: 'Cadangkan Data',
@@ -695,6 +697,42 @@ class _SheetHeader extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(subtitle, style: theme.textTheme.bodyMedium),
       ],
+    );
+  }
+}
+
+class _BackupSecurityNotice extends StatelessWidget {
+  const _BackupSecurityNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.colorScheme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.warningOrange.withValues(alpha: isDark ? 0.14 : 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(
+          color: AppColors.warningOrange.withValues(
+            alpha: isDark ? 0.32 : 0.22,
+          ),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.shield_outlined, color: AppColors.warningOrange, size: 22),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              'File cadangan berisi data keuangan. Simpan di tempat yang aman.',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

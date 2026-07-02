@@ -22,7 +22,12 @@ class BackupRepository {
       content: const JsonEncoder.withIndent('  ').convert(payload),
       mimeType: 'application/json',
     );
-    await Share.shareXFiles([file], text: 'Cadangan FadDompet');
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [file],
+        text: 'Cadangan FadDompet. Simpan file ini di tempat yang aman.',
+      ),
+    );
     return name;
   }
 
@@ -66,7 +71,9 @@ class BackupRepository {
       content: csv.encode(rows),
       mimeType: 'text/csv',
     );
-    await Share.shareXFiles([file], text: 'CSV transaksi FadDompet');
+    await SharePlus.instance.share(
+      ShareParams(files: [file], text: 'CSV transaksi FadDompet'),
+    );
     return name;
   }
 
@@ -77,16 +84,15 @@ class BackupRepository {
   }
 
   Future<BackupImportPreview?> pickImportPreview() async {
-    final result = await FilePicker.platform.pickFiles(
+    final file = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['json'],
-      withData: true,
     );
-    final bytes = result?.files.single.bytes;
-    if (bytes == null) {
+    if (file == null) {
       return null;
     }
 
+    final bytes = await file.readAsBytes();
     final raw = utf8.decode(bytes);
     final payload = _decodeAndValidate(raw);
     return BackupImportPreview(

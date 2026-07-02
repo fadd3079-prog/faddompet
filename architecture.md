@@ -611,7 +611,7 @@ Rules:
 
 * quick template mempercepat input transaksi.
 * default amount boleh kosong.
-* template bisa digunakan untuk transaksi rutin seperti makan, minum, laundry, uang saku, freelance.
+* template bisa digunakan untuk transaksi rutin seperti makan, minum, laundry, uang saku, atau pemasukan tambahan.
 
 ---
 
