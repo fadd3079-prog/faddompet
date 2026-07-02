@@ -63,7 +63,7 @@ jobs:
         run: flutter build apk --release --split-per-abi
 
       - name: Upload APK artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: faddompet-release-apks
           path: build/app/outputs/flutter-apk/*-release.apk
