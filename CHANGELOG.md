@@ -2,6 +2,15 @@
 
 All notable changes to FadDompet are documented in this file.
 
+## [1.3.0] - 2026-07-03
+
+- Improved Analytics period filtering.
+- Improved chart explanations, legends, and budget visibility.
+- Improved category icons across transactions, dashboard, and settings.
+- Improved budget form layout consistency.
+- Fixed app version display consistency.
+- Prepared release naming and documentation for v1.3.0.
+
 ## [1.2.1] - 2026-07-02
 
 - Added in-app update checker.

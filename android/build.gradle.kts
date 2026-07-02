@@ -3,6 +3,12 @@ allprojects {
         google()
         mavenCentral()
     }
+    configurations.configureEach {
+        resolutionStrategy.force(
+            "androidx.core:core:1.18.0",
+            "androidx.core:core-ktx:1.18.0",
+        )
+    }
 }
 
 val newBuildDir: Directory =

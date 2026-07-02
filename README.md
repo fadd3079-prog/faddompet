@@ -68,6 +68,12 @@ https://github.com/fadd3079-prog/faddompet/releases/latest
 
 For most modern Android phones, use the `arm64` APK.
 
+Current release APK name:
+
+```txt
+FadDompet-v1.3.0-arm64.apk
+```
+
 APK files installed from GitHub are sideloaded. Android or Play Protect may show a warning because the app is not installed from the Play Store.
 
 ## Verify APK
@@ -77,8 +83,10 @@ If a release provides a SHA256 checksum, verify the downloaded APK before instal
 PowerShell:
 
 ```powershell
-Get-FileHash .\FadDompet-vX.X.X-arm64.apk -Algorithm SHA256
+Get-FileHash .\FadDompet-v1.3.0-arm64.apk -Algorithm SHA256
 ```
+
+SHA256 tersedia di halaman GitHub Release.
 
 ## Build From Source
 
