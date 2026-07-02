@@ -1,0 +1,26 @@
+warning: in the working copy of '.github/pull_request_template.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'CHANGELOG.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'CODE_OF_CONDUCT.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'CONTRIBUTING.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ROADMAP.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'SECURITY.md', LF will be replaced by CRLF the next time Git touches it
+ .github/ISSUE_TEMPLATE/bug_report.md      |   0
+ .github/ISSUE_TEMPLATE/feature_request.md |   0
+ .github/pull_request_template.md          |  23 [32m+++++[m
+ .github/workflows/dart.yml                |  42 [31m--------[m
+ CHANGELOG.md                              |  33 [32m+++[m[31m---[m
+ CODE_OF_CONDUCT.md                        |  28 [32m+++[m[31m---[m
+ CONTRIBUTING.md                           |  83 [32m++++++++++[m[31m-----[m
+ README.md                                 | 162 [32m+++++++++++++++++++++[m[31m---------[m
+ ROADMAP.md                                |  48 [32m+++[m[31m------[m
+ SECURITY.md                               |  57 [32m+++++++[m[31m----[m
+ docs/analytics-rules.md                   |   0
+ docs/backup-export.md                     |   0
+ docs/database-schema.md                   |   0
+ docs/features.md                          |   0
+ docs/ios-ui.zip                           | Bin [31m40728[m -> [32m0[m bytes
+ docs/project-brief.md                     |   0
+ docs/roadmap.md                           |   0
+ docs/ui-guidelines.md                     |   0
+ 18 files changed, 281 insertions(+), 195 deletions(-)

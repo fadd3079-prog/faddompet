@@ -1,74 +1,142 @@
-# FadDompet
+<p align="center">
+  <img src="assets/icons/app_icon.png" width="96" alt="FadDompet logo">
+</p>
 
-FadDompet adalah aplikasi pencatat keuangan pribadi offline untuk mengelola pemasukan, pengeluaran, transfer, dompet, budget, dan ringkasan keuangan secara lokal di perangkat.
+<h1 align="center">FadDompet</h1>
 
-## Status
+<p align="center">
+  Offline-first personal finance tracker for Android.
+</p>
+
+<p align="center">
+  FadDompet helps users track income, expenses, wallets, budgets, backups, and app updates locally on their device.
+</p>
+
+<p align="center">
+  <a href="https://github.com/fadd3079-prog/faddompet/actions/workflows/flutter-ci.yml"><img alt="Flutter CI" src="https://img.shields.io/github/actions/workflow/status/fadd3079-prog/faddompet/flutter-ci.yml?branch=main&style=flat-square&label=Flutter%20CI"></a>
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.x-02569B?style=flat-square&logo=flutter&logoColor=white">
+  <img alt="Android" src="https://img.shields.io/badge/Android-primary-3DDC84?style=flat-square&logo=android&logoColor=white">
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-blue?style=flat-square"></a>
+  <a href="https://github.com/fadd3079-prog/faddompet/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/fadd3079-prog/faddompet?style=flat-square"></a>
+  <img alt="Offline first" src="https://img.shields.io/badge/Offline-first-0F766E?style=flat-square">
+</p>
+
+## Screenshots
+
+Release screenshots are prepared in `docs/screenshots/`. Add small Android screenshots there and keep them around 180-220 px wide in this section.
+
+## Features
+
+- Income and expense tracking
+- Wallet management
+- Transfer between wallets
+- Monthly budgets
+- Analytics and summaries
+- Local app lock with PIN and optional biometric unlock
+- Backup and restore for moving data between phones
+- CSV transaction export
+- In-app update checker with direct APK download
+- Offline-first local storage
+
+## Privacy Model
+
+- No account
+- No cloud sync
+- No ads
+- No analytics or tracking
+- Data stays on the device
+- Backup files contain financial data and should be stored safely
+
+FadDompet uses the internet only for user-triggered actions such as checking app updates, downloading an APK update, opening external links, or sharing exported files through Android.
+
+## Download
+
+Download the latest Android APK from GitHub Releases:
+
+https://github.com/fadd3079-prog/faddompet/releases/latest
+
+For most modern Android phones, use the `arm64` APK.
+
+APK files installed from GitHub are sideloaded. Android or Play Protect may show a warning because the app is not installed from the Play Store.
+
+## Verify APK
+
+If a release provides a SHA256 checksum, verify the downloaded APK before installing it.
+
+PowerShell:
+
+```powershell
+Get-FileHash .\FadDompet-vX.X.X-arm64.apk -Algorithm SHA256
+```
+
+## Build From Source
+
+Requirements:
+
+- Flutter stable
+- Android SDK
+- Java 17
+
+Commands:
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
+flutter build apk --release --split-per-abi
+```
+
+Release signing uses a local keystore. Do not commit `android/key.properties`, `.jks`, or `.keystore` files.
+
+For release publishing steps, see [docs/release-checklist.md](docs/release-checklist.md).
+
+## Tech Stack
+
+- Flutter
+- Dart
+- Drift
+- SQLite
+- Riverpod
+- fl_chart
+- Android
+
+## Project Structure
 
 ```txt
-FadDompet v1.2.0 - Offline personal money management app for Android
+lib/app       App bootstrap, theme, and providers
+lib/core      Constants, enums, formatters, and helpers
+lib/data      Drift database, repositories, backup, security, updates
+lib/features  Feature-first UI modules
+lib/shared    Shared layouts, widgets, and components
+test          Unit and widget tests
+android       Android host project
 ```
 
-## Fitur Utama
+## Roadmap
 
-- Pencatatan pemasukan, pengeluaran, dan transfer
-- Dompet lokal: Tunai, E-Wallet, Rekening, Tabungan
-- Dashboard saldo dan ringkasan bulan ini
-- Riwayat transaksi dengan pencarian dan filter
-- Analitik dan budget bulanan
-- Kategori pemasukan dan pengeluaran yang bisa dikelola
-- Cadangkan dan pulihkan data saat ganti HP
-- Ekspor laporan transaksi CSV
-- Reset data dengan konfirmasi aman
-- PIN lock, biometrik opsional, dan hide balance
-- UI Android premium yang terinspirasi iOS
+- UI polish
+- Backup encryption
+- Better data export
+- Optional database encryption
+- More tests
+- Possible Play Store distribution
 
-## Prinsip Produk
+## Contributing
 
-- Offline-first
-- Tanpa akun atau login online
-- Tanpa cloud sync
-- Tanpa iklan
-- Tanpa analytics atau tracking
-- Data tersimpan lokal di perangkat
-- Ringan untuk penggunaan harian
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Download APK
+## Security
 
-APK rilis dapat dibagikan melalui GitHub Releases. Karena APK dari GitHub dipasang dengan sideload, Play Protect dapat menampilkan peringatan walaupun aplikasi tidak memakai permission berisiko. Verifikasi file dari sumber rilis resmi sebelum memasang.
+See [SECURITY.md](SECURITY.md).
 
-Untuk membuat checksum SHA256 APK di PowerShell:
+## Support Development
 
-```powershell
-Get-FileHash build\app\outputs\flutter-apk\app-arm64-v8a-release.apk -Algorithm SHA256
-```
+If FadDompet helps you, you can support its ongoing development here:
 
-## Release Signing
+https://tako.id/fadhol_pemula
 
-APK publik harus ditandatangani dengan release keystore lokal. Buat keystore:
+## License
 
-```powershell
-keytool -genkey -v -keystore android/app/faddompet-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias faddompet
-```
+FadDompet is released under the [MIT License](LICENSE).
 
-Buat file `android/key.properties` di mesin lokal:
-
-```properties
-storePassword=isi_password_store
-keyPassword=isi_password_key
-keyAlias=faddompet
-storeFile=faddompet-release-key.jks
-```
-
-Jangan commit `android/key.properties`, `.jks`, atau `.keystore`.
-
-## Backup
-
-Fitur cadangan membantu memindahkan data ke HP baru. File cadangan berisi data keuangan dalam format lokal, jadi simpan di tempat yang aman dan jangan dibagikan sembarangan.
-
-## Target Platform
-
-Android adalah target utama. Flutter Web digunakan hanya untuk preview pengembangan.
-
-## Lisensi
-
-Lisensi: MIT.
+Copyright (c) 2026 Mufaddhol.

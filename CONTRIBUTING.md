@@ -1,40 +1,69 @@
-# Contributing to Faddompet
+# Contributing to FadDompet
 
-Thank you for your interest in contributing to Faddompet.
+Thanks for your interest in improving FadDompet.
 
-Faddompet is currently built as a personal-use offline money management app. Contributions are welcome as long as they keep the project simple, lightweight, and offline-first.
+FadDompet is an offline-first Android personal finance app. Contributions should keep the app simple, lightweight, private by default, and comfortable on lower-end Android devices.
 
-## Contribution Guidelines
+## Local Setup
 
-Please keep contributions aligned with these principles:
+```bash
+flutter pub get
+flutter analyze
+flutter test
+```
 
-- Keep the app fast and lightweight
-- Avoid unnecessary dependencies
-- Prioritize offline-first behavior
-- Keep the UI clean and minimal
-- Use clear naming
-- Keep features practical for personal finance tracking
-- Avoid adding cloud sync unless it is optional
+To build a release APK locally:
 
-## Development Flow
+```bash
+flutter build apk --release --split-per-abi
+```
 
-1. Fork the repository
-2. Create a new branch
-3. Make your changes
-4. Test your changes
-5. Open a pull request
+## Branch Naming
+
+Use short, descriptive names:
+
+```txt
+feat/update-checker
+fix/wallet-balance
+docs/readme-polish
+refactor/settings-sheet
+```
 
 ## Commit Style
 
-Use clear commit messages.
-
-Examples:
+Use clear commit messages:
 
 ```txt
-feat: add transaction form
-fix: correct wallet balance calculation
-docs: update roadmap
-refactor: clean dashboard provider
-Notes
+feat: add budget reset flow
+fix: prevent transfer to same wallet
+docs: update release checklist
+test: cover version comparison
+```
 
-This project is maintained with a focus on simplicity, stability, and personal usefulness.
+## Development Principles
+
+- Keep the app offline-first.
+- Avoid unnecessary dependencies.
+- Do not add accounts, backend sync, ads, analytics, or tracking.
+- Keep Android as the main target.
+- Keep Bahasa Indonesia for app UI.
+- Keep public documentation clear and direct.
+- Do not commit secrets, keystores, local config, backups, or exported financial data.
+
+## UI and UX
+
+- Follow the existing design system.
+- Keep controls readable and comfortable to tap.
+- Avoid heavy blur, excessive shadows, and expensive animations.
+- Use simple, beginner-friendly wording in the app.
+
+## Before Opening a Pull Request
+
+Run:
+
+```bash
+flutter analyze
+flutter test
+```
+
+Update documentation when behavior, permissions, release process, or security assumptions change.

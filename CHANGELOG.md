@@ -1,24 +1,25 @@
 # Changelog
 
-All notable changes to FadDompet will be documented in this file.
+All notable changes to FadDompet are documented in this file.
 
-## 1.2.0
+## [1.2.1] - 2026-07-02
 
-### Security
+- Added in-app update checker.
+- Added direct Android APK download flow.
+- Added SHA256 validation when a release checksum is available.
+- Improved update error handling and Android installer handoff.
 
+## [1.2.0] - 2026-07-02
+
+- Improved security and release hygiene.
 - Hardened local app lock behavior.
-- Documented offline trust model and backup safety.
-- Prepared release signing configuration for local keystore use.
+- Added PIN failed-attempt cooldown.
+- Improved backup validation and restore safety.
+- Added release signing configuration for local keystore use.
+- Updated public documentation for APK verification and offline trust model.
 
-### Changed
+## [1.1.0] - 2026-07-02
 
-- Improved release hygiene and documentation for GitHub APK distribution.
-- Kept branding consistent as FadDompet in public documentation.
-
-## 1.1.0
-
-### Added
-
-- Offline transaction, wallet, category, budget, analytics, backup, and settings features.
-- PIN lock, optional biometric unlock, and hide balance.
-- MIT License.
+- Added offline transactions, wallets, categories, budgets, analytics, backup, and settings.
+- Added PIN lock, optional biometric unlock, and hide balance.
+- Added MIT License.

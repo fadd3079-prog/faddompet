@@ -1,32 +1,55 @@
 # Security Policy
 
-FadDompet dirancang sebagai aplikasi pencatat keuangan pribadi offline. Aplikasi tidak membutuhkan akun, cloud sync, iklan, analytics, atau tracking untuk fitur inti.
+## Supported Versions
 
-## Trust Model
+Security fixes are focused on the latest public release of FadDompet.
 
-- Data utama disimpan lokal di perangkat.
-- App lock memakai PIN lokal dan biometrik opsional jika tersedia.
-- PIN tidak disimpan sebagai teks asli.
-- App lock bukan enkripsi penuh database.
-- File cadangan berisi data keuangan dan harus disimpan di tempat yang aman.
-- APK yang dipasang lewat sideload dari GitHub dapat memunculkan peringatan Play Protect.
+| Version | Supported |
+| --- | --- |
+| Latest release | Yes |
+| Older releases | Best effort |
 
-## Permissions
+## Security Model
 
-FadDompet menjaga permission Android tetap minimal. Permission biometrik hanya digunakan untuk membuka app lock jika pengguna mengaktifkan biometrik.
+FadDompet is an offline-first Android app for personal finance tracking.
+
+- No account is required.
+- No cloud sync is used.
+- No ads are included.
+- No analytics or tracking is included.
+- Core financial data is stored locally on the device.
+- Local app lock uses a PIN and optional biometric unlock when enabled.
+- PIN data is not stored as raw text.
+- App lock is not full database encryption.
+- Backup files contain financial data and should be stored safely.
+- APK files installed from GitHub may trigger Android or Play Protect sideload warnings.
+
+Do not treat FadDompet as a replacement for device-level security, encrypted storage, or a password manager.
+
+## Reporting a Vulnerability
+
+For non-sensitive bugs, open a GitHub issue.
+
+For sensitive security issues, contact the maintainer privately through the maintainer's GitHub profile before publishing details.
+
+Please include:
+
+- A clear description of the issue
+- Steps to reproduce
+- Affected app version
+- Android version and device model
+- Any relevant logs or screenshots with personal data removed
 
 ## Backup Safety
 
-Cadangan dibuat dan dipulihkan atas kontrol pengguna. Sebelum memulihkan data, aplikasi memvalidasi isi file cadangan. File yang tidak valid tidak boleh menghapus data yang sudah ada.
+Backup and restore are user-controlled. FadDompet validates backup files before restore, but users should keep backup files in a safe place and avoid sharing them publicly.
 
-## Verifikasi APK
+## APK Verification
 
-Gunakan checksum SHA256 untuk memeriksa file APK dari rilis resmi:
+When a release includes a SHA256 checksum, verify the APK before installing it:
 
 ```powershell
-Get-FileHash build\app\outputs\flutter-apk\app-arm64-v8a-release.apk -Algorithm SHA256
+Get-FileHash .\FadDompet-vX.X.X-arm64.apk -Algorithm SHA256
 ```
 
-## Reporting Security Issues
-
-Jika menemukan masalah keamanan, laporkan secara privat kepada maintainer. Jangan mempublikasikan detail sensitif sebelum masalah ditinjau.
+FadDompet does not claim to be "100% secure". Security is handled as an ongoing maintenance responsibility.

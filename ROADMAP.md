@@ -1,40 +1,20 @@
-# Faddompet Roadmap
+# Roadmap
 
-## Version 1.0
+FadDompet is maintained as a lightweight offline-first Android finance tracker. The roadmap is intentionally conservative.
 
-Goal: A complete offline personal finance app for Android.
+## Near Term
 
-### Core
+- UI polish and accessibility fixes
+- More repository and regression tests
+- Better release notes and APK verification flow
+- Export and backup UX improvements
 
-- [ ] Flutter project setup
-- [ ] App theme and design system
-- [ ] Local database setup
-- [ ] Transaction model
-- [ ] Category model
-- [ ] Wallet model
-- [ ] Budget model
+## Later
 
-### Features
+- Backup encryption
+- Optional database encryption
+- More flexible reports
+- More complete import validation
+- Possible Play Store distribution
 
-- [ ] Onboarding
-- [ ] Dashboard
-- [ ] Add income
-- [ ] Add expense
-- [ ] Transfer between wallets
-- [ ] Transaction history
-- [ ] Category management
-- [ ] Wallet management
-- [ ] Monthly analytics
-- [ ] Budget tracking
-- [ ] Backup and export
-- [ ] Settings
-
-### Polish
-
-- [ ] Empty states
-- [ ] Loading states
-- [ ] Error states
-- [ ] Dark mode
-- [ ] App lock
-- [ ] GitHub documentation
-- [ ] Release APK
+No cloud sync, ads, tracking, or online accounts are planned for the core app.

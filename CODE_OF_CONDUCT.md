@@ -1,21 +1,25 @@
 # Code of Conduct
 
-Faddompet is an open-source project. Contributors are expected to communicate respectfully and constructively.
+FadDompet follows a simple expectation: be respectful, constructive, and focused on improving the project.
 
 ## Expected Behavior
 
-- Be respectful
-- Give clear feedback
-- Focus on the project
-- Avoid personal attacks
-- Keep discussions constructive
+- Use welcoming and inclusive language.
+- Respect different experience levels and perspectives.
+- Give feedback that is specific and actionable.
+- Keep discussions focused on the project.
+- Assume good intent when reviewing issues and pull requests.
 
 ## Unacceptable Behavior
 
-- Harassment
-- Insults
-- Discrimination
-- Spam
-- Intimidation
+- Harassment, insults, or personal attacks
+- Discriminatory language or behavior
+- Spam or repeated off-topic comments
+- Publishing private information without permission
+- Intimidation or hostile conduct
 
-The maintainer may remove comments, issues, or contributions that violate these expectations.
+## Enforcement
+
+Maintainers may remove comments, close issues, or reject contributions that violate these expectations.
+
+If a conduct issue needs attention, contact the maintainer through the maintainer's GitHub profile.
