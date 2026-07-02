@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -255,7 +256,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         child: Align(
           alignment: Alignment.bottomCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppSpacing.webMaxWidth),
+            constraints: const BoxConstraints(
+              maxWidth: kIsWeb ? AppSpacing.webMaxWidth : double.infinity,
+            ),
             child: Container(
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkSurface : AppColors.surface,

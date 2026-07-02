@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/theme/app_colors.dart';
@@ -43,7 +44,9 @@ class PremiumBottomNav extends StatelessWidget {
       child: Align(
         alignment: Alignment.bottomCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: AppSpacing.webMaxWidth),
+          constraints: const BoxConstraints(
+            maxWidth: kIsWeb ? AppSpacing.webMaxWidth : double.infinity,
+          ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Container(

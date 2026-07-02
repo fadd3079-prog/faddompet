@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/theme/app_colors.dart';
@@ -83,6 +84,7 @@ class _MainShellState extends State<MainShell> {
           final brightness = theme.colorScheme.brightness;
           final isDark = brightness == Brightness.dark;
           final showFrame =
+              kIsWeb &&
               constraints.maxWidth > AppSpacing.webMaxWidth + AppSpacing.huge;
           final frameWidth = showFrame
               ? AppSpacing.webMaxWidth
