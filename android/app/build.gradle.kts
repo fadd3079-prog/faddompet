@@ -81,5 +81,5 @@ flutter {
 }
 
 dependencies {
-    implementation("androidx.core:core:1.17.0")
+    implementation("androidx.core:core:1.19.0")
 }
