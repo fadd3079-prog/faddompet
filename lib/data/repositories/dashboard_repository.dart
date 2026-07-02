@@ -111,11 +111,18 @@ class DashboardRepository {
         )
         .fold<int>(0, (total, item) => total + item.amount);
 
-    final budgetLimit = budgets
-        .where(
-          (budget) => budget.month == monthKey && budget.categoryId == null,
-        )
+    final currentBudgets = budgets
+        .where((budget) => budget.month == monthKey)
+        .toList();
+    final monthlyBudgetLimit = currentBudgets
+        .where((budget) => budget.categoryId == null)
         .fold<int>(0, (total, budget) => total + budget.limitAmount);
+    final categoryBudgetLimitTotal = currentBudgets
+        .where((budget) => budget.categoryId != null)
+        .fold<int>(0, (total, budget) => total + budget.limitAmount);
+    final budgetLimit = monthlyBudgetLimit > 0
+        ? monthlyBudgetLimit
+        : categoryBudgetLimitTotal;
 
     final categoryTotals = <int, int>{};
     for (final transaction in monthly) {
@@ -143,6 +150,9 @@ class DashboardRepository {
       walletCount: wallets.length,
       budgetLimit: budgetLimit,
       budgetSpent: monthlyExpense,
+      budgetCount: currentBudgets.length,
+      hasMonthlyBudget: monthlyBudgetLimit > 0,
+      categoryBudgetLimitTotal: categoryBudgetLimitTotal,
       topExpenseCategory: categoriesById[topCategoryId]?.name,
       recentTransactions: [
         for (final transaction in transactions.take(5))

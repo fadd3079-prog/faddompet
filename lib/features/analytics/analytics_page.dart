@@ -1,4 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +7,7 @@ import '../../app/providers/app_providers.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
+import '../../core/enums/analytics_period.dart';
 import '../../core/enums/budget_status.dart';
 import '../../core/formatters/currency_formatter.dart';
 import '../../core/formatters/date_formatter.dart';
@@ -25,6 +27,7 @@ class AnalyticsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final analytics = ref.watch(analyticsSummaryProvider);
+    final selectedPeriod = ref.watch(analyticsPeriodProvider);
     final budgets = ref.watch(budgetProgressProvider);
     final categories = ref
         .watch(categoriesProvider)
@@ -61,8 +64,15 @@ class AnalyticsPage extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Lihat pola pemasukan, pengeluaran, dan budget bulan ini.',
+              'Lihat pola pemasukan, pengeluaran, dan budget sesuai periode.',
               style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _AnalyticsPeriodFilter(
+              selected: selectedPeriod,
+              onSelected: (period) {
+                ref.read(analyticsPeriodProvider.notifier).setPeriod(period);
+              },
             ),
             const SizedBox(height: AppSpacing.xxl),
             if (summary.isEmpty)
@@ -75,17 +85,34 @@ class AnalyticsPage extends ConsumerWidget {
             else ...[
               _ChartCard(
                 title: 'Pengeluaran per kategori',
+                subtitle:
+                    'Distribusi pengeluaran berdasarkan periode yang dipilih.',
                 child: _DonutChart(items: summary.expenseByCategory),
               ),
               const SizedBox(height: AppSpacing.lg),
               _ChartCard(
-                title: 'Arus kas harian',
-                child: _LineChart(items: summary.dailyCashflow),
+                title: 'Arus kas',
+                subtitle:
+                    'Selisih pemasukan dan pengeluaran dari waktu ke waktu.',
+                child: _LineChart(
+                  items: summary.dailyCashflow,
+                  period: selectedPeriod,
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               _ChartCard(
-                title: 'Pengeluaran mingguan',
-                child: _BarChart(items: summary.weeklyExpense),
+                title: selectedPeriod == AnalyticsPeriod.currentMonth
+                    ? 'Pengeluaran mingguan'
+                    : 'Pengeluaran per bulan',
+                subtitle: selectedPeriod == AnalyticsPeriod.currentMonth
+                    ? 'Total pengeluaran per minggu dalam periode yang dipilih.'
+                    : 'Total pengeluaran per bulan dalam periode yang dipilih.',
+                child: _BarChart(
+                  items: summary.weeklyExpense,
+                  emptyMessage: selectedPeriod == AnalyticsPeriod.currentMonth
+                      ? 'Belum ada pengeluaran mingguan pada periode ini.'
+                      : 'Belum ada pengeluaran pada periode ini.',
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               _TopCategoryList(items: summary.topExpenses),
@@ -117,10 +144,12 @@ class AnalyticsPage extends ConsumerWidget {
     List<CategoryEntry> categories, [
     BudgetProgress? existing,
   ]) async {
-    final result = await showDialog<_BudgetFormResult>(
+    final result = await showModalBottomSheet<_BudgetFormResult>(
       context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
       builder: (context) =>
-          _BudgetDialog(categories: categories, existing: existing),
+          _BudgetFormSheet(categories: categories, existing: existing),
     );
     if (result == null) return;
 
@@ -195,10 +224,98 @@ class AnalyticsPage extends ConsumerWidget {
   }
 }
 
+class _AnalyticsPeriodFilter extends StatelessWidget {
+  const _AnalyticsPeriodFilter({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final AnalyticsPeriod selected;
+  final ValueChanged<AnalyticsPeriod> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.hardEdge,
+      child: Row(
+        children: [
+          for (final period in AnalyticsPeriod.values) ...[
+            _PeriodChip(
+              label: period.label,
+              selected: selected == period,
+              onTap: () => onSelected(period),
+            ),
+            if (period != AnalyticsPeriod.values.last)
+              const SizedBox(width: AppSpacing.sm),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PeriodChip extends StatelessWidget {
+  const _PeriodChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.colorScheme.brightness == Brightness.dark;
+
+    return PressableSurface(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? (isDark ? AppColors.softMint : AppColors.primary)
+              : (isDark ? AppColors.darkSurfaceElevated : AppColors.surface),
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(
+            color: selected
+                ? Colors.transparent
+                : isDark
+                ? AppColors.darkBorderSubtle
+                : AppColors.borderSubtle,
+          ),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: selected
+                ? (isDark ? AppColors.darkBackground : AppColors.onDark)
+                : theme.colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ChartCard extends StatelessWidget {
-  const _ChartCard({required this.title, required this.child});
+  const _ChartCard({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
 
   final String title;
+  final String subtitle;
   final Widget child;
 
   @override
@@ -219,8 +336,10 @@ class _ChartCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: theme.textTheme.titleLarge),
+          const SizedBox(height: AppSpacing.xs),
+          Text(subtitle, style: theme.textTheme.bodyMedium),
           const SizedBox(height: AppSpacing.xl),
-          SizedBox(height: 220, child: child),
+          SizedBox(height: 244, child: child),
         ],
       ),
     );
@@ -235,8 +354,11 @@ class _DonutChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const _ChartEmptyState('Belum ada pengeluaran bulan ini.');
+      return const _ChartEmptyState('Belum ada pengeluaran pada periode ini.');
     }
+
+    final total = items.fold<int>(0, (value, item) => value + item.amount);
+    final slices = _donutSlices(items);
 
     return Row(
       children: [
@@ -246,11 +368,11 @@ class _DonutChart extends StatelessWidget {
               centerSpaceRadius: 44,
               sectionsSpace: 2,
               sections: [
-                for (final item in items.take(6))
+                for (final item in slices)
                   PieChartSectionData(
                     value: item.amount.toDouble(),
                     title: '',
-                    color: Color(item.colorValue),
+                    color: item.color,
                     radius: 42,
                   ),
               ],
@@ -263,14 +385,9 @@ class _DonutChart extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final item in items.take(4)) ...[
-                Text(
-                  item.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-                const SizedBox(height: AppSpacing.xs),
+              for (final item in slices) ...[
+                _DonutLegendItem(item: item, total: total),
+                if (item != slices.last) const SizedBox(height: AppSpacing.md),
               ],
             ],
           ),
@@ -280,33 +397,183 @@ class _DonutChart extends StatelessWidget {
   }
 }
 
+class _DonutLegendItem extends StatelessWidget {
+  const _DonutLegendItem({required this.item, required this.total});
+
+  final _DonutSlice item;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final percent = total <= 0 ? 0 : ((item.amount / total) * 100).round();
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: AppSpacing.md,
+          height: AppSpacing.md,
+          margin: const EdgeInsets.only(top: AppSpacing.xs),
+          decoration: BoxDecoration(
+            color: item.color,
+            borderRadius: BorderRadius.circular(AppRadius.full),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelLarge,
+              ),
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                '${CurrencyFormatter.rupiah(item.amount)} · $percent%',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+List<_DonutSlice> _donutSlices(List<CategoryAmount> items) {
+  final top = items.take(4).toList();
+  final rest = items.skip(4).fold<int>(0, (value, item) => value + item.amount);
+
+  return [
+    for (var index = 0; index < top.length; index++)
+      _DonutSlice(
+        label: top[index].label,
+        amount: top[index].amount,
+        color: _chartColor(top[index].colorValue, index),
+      ),
+    if (rest > 0)
+      _DonutSlice(
+        label: 'Kategori lainnya',
+        amount: rest,
+        color: AppColors.textTertiary,
+      ),
+  ];
+}
+
+Color _chartColor(int colorValue, int index) {
+  if (colorValue != 0) {
+    return Color(colorValue);
+  }
+  const fallback = [
+    AppColors.expenseRed,
+    AppColors.warningOrange,
+    AppColors.primary,
+    AppColors.infoBlue,
+    AppColors.incomeGreen,
+  ];
+  return fallback[index % fallback.length];
+}
+
+class _DonutSlice {
+  const _DonutSlice({
+    required this.label,
+    required this.amount,
+    required this.color,
+  });
+
+  final String label;
+  final int amount;
+  final Color color;
+}
+
 class _LineChart extends StatelessWidget {
-  const _LineChart({required this.items});
+  const _LineChart({required this.items, required this.period});
 
   final List<DailyCashflow> items;
+  final AnalyticsPeriod period;
 
   @override
   Widget build(BuildContext context) {
     if (items.every((item) => item.income == 0 && item.expense == 0)) {
-      return const _ChartEmptyState('Belum ada arus kas minggu ini.');
+      return const _ChartEmptyState('Belum ada arus kas pada periode ini.');
     }
 
+    final theme = Theme.of(context);
+    final isDark = theme.colorScheme.brightness == Brightness.dark;
     final spots = [
       for (var index = 0; index < items.length; index++)
         FlSpot(
           index.toDouble(),
-          (items[index].income - items[index].expense).toDouble() / 1000,
+          (items[index].income - items[index].expense).toDouble(),
         ),
     ];
 
     return LineChart(
       LineChartData(
         gridData: const FlGridData(show: false),
-        titlesData: const FlTitlesData(show: false),
+        titlesData: FlTitlesData(
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 32,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (!_shouldShowLineLabel(index, items.length)) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: Text(
+                    _lineLabel(items[index].date, period),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
         borderData: FlBorderData(show: false),
         minY: _lineMinY(spots),
         maxY: _lineMaxY(spots),
-        lineTouchData: const LineTouchData(enabled: false),
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            tooltipBorderRadius: BorderRadius.circular(AppRadius.md),
+            tooltipPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            getTooltipColor: (_) =>
+                isDark ? AppColors.darkSurfaceElevated : AppColors.textPrimary,
+            getTooltipItems: (spots) {
+              return [
+                for (final spot in spots)
+                  LineTooltipItem(
+                    CurrencyFormatter.rupiah(spot.y.round()),
+                    theme.textTheme.labelLarge!.copyWith(
+                      color: AppColors.onDark,
+                    ),
+                  ),
+              ];
+            },
+          ),
+        ),
         clipData: const FlClipData.none(),
         lineBarsData: [
           LineChartBarData(
@@ -336,10 +603,52 @@ class _LineChart extends StatelessWidget {
   }
 }
 
+bool _shouldShowLineLabel(int index, int length) {
+  if (index < 0 || index >= length) return false;
+  if (length <= 4) return true;
+  return index == 0 || index == length ~/ 2 || index == length - 1;
+}
+
+String _lineLabel(DateTime date, AnalyticsPeriod period) {
+  switch (period) {
+    case AnalyticsPeriod.currentMonth:
+      return '${date.day}';
+    case AnalyticsPeriod.last3Months:
+    case AnalyticsPeriod.yearToDate:
+    case AnalyticsPeriod.allTime:
+      return _shortMonthLabel(date);
+  }
+}
+
+String _shortMonthLabel(DateTime date) {
+  const labels = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
+  ];
+  return labels[date.month - 1];
+}
+
+bool _shouldShowBarLabel(int index, int length) {
+  if (index < 0 || index >= length) return false;
+  if (length <= 6) return true;
+  return index == 0 || index == length ~/ 2 || index == length - 1;
+}
+
 class _BarChart extends StatelessWidget {
-  const _BarChart({required this.items});
+  const _BarChart({required this.items, required this.emptyMessage});
 
   final List<CategoryAmount> items;
+  final String emptyMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -350,13 +659,13 @@ class _BarChart extends StatelessWidget {
     });
 
     if (maxAmount == 0) {
-      return const _ChartEmptyState('Belum ada pengeluaran mingguan.');
+      return _ChartEmptyState(emptyMessage);
     }
 
     return BarChart(
       BarChartData(
         minY: 0,
-        maxY: (maxAmount / 1000) * 1.24,
+        maxY: maxAmount * 1.24,
         alignment: BarChartAlignment.spaceAround,
         gridData: FlGridData(
           drawVerticalLine: false,
@@ -381,7 +690,7 @@ class _BarChart extends StatelessWidget {
               reservedSize: 28,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index < 0 || index >= items.length) {
+                if (!_shouldShowBarLabel(index, items.length)) {
                   return const SizedBox.shrink();
                 }
                 return Padding(
@@ -430,8 +739,8 @@ class _BarChart extends StatelessWidget {
               x: index,
               barRods: [
                 BarChartRodData(
-                  toY: items[index].amount.toDouble() / 1000,
-                  width: 24,
+                  toY: items[index].amount.toDouble(),
+                  width: items.length > 8 ? 16 : 24,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   color: AppColors.expenseRed.withValues(alpha: 0.82),
                 ),
@@ -466,10 +775,15 @@ class _TopCategoryList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Top 5 pengeluaran', style: theme.textTheme.titleLarge),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Kategori pengeluaran terbesar pada periode yang dipilih.',
+            style: theme.textTheme.bodyMedium,
+          ),
           const SizedBox(height: AppSpacing.lg),
           if (items.isEmpty)
             Text(
-              'Belum ada pengeluaran bulan ini.',
+              'Belum ada pengeluaran pada periode ini.',
               style: theme.textTheme.bodyMedium,
             )
           else
@@ -631,19 +945,20 @@ class _BudgetCard extends StatelessWidget {
   }
 }
 
-class _BudgetDialog extends StatefulWidget {
-  const _BudgetDialog({required this.categories, this.existing});
+class _BudgetFormSheet extends StatefulWidget {
+  const _BudgetFormSheet({required this.categories, this.existing});
 
   final List<CategoryEntry> categories;
   final BudgetProgress? existing;
 
   @override
-  State<_BudgetDialog> createState() => _BudgetDialogState();
+  State<_BudgetFormSheet> createState() => _BudgetFormSheetState();
 }
 
-class _BudgetDialogState extends State<_BudgetDialog> {
+class _BudgetFormSheetState extends State<_BudgetFormSheet> {
   late final TextEditingController _amountController;
   int? _categoryId;
+  String? _error;
 
   @override
   void initState() {
@@ -673,68 +988,118 @@ class _BudgetDialogState extends State<_BudgetDialog> {
         .toList();
     final editing = widget.existing != null;
 
-    return AlertDialog(
-      title: Text(editing ? 'Edit budget' : 'Tambah budget'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DropdownButtonFormField<int?>(
-            isExpanded: true,
-            initialValue: _categoryId,
-            decoration: const InputDecoration(labelText: 'Cakupan'),
-            onChanged: editing
-                ? null
-                : (value) => setState(() => _categoryId = value),
-            items: [
-              const DropdownMenuItem<int?>(
-                value: null,
-                child: Text(
-                  'Budget bulanan',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SafeArea(
+        top: false,
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: kIsWeb ? AppSpacing.webMaxWidth : double.infinity,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screen,
+                AppSpacing.sm,
+                AppSpacing.screen,
+                AppSpacing.xl,
               ),
-              for (final category in expenseCategories)
-                DropdownMenuItem<int?>(
-                  value: category.id,
-                  child: Text(
-                    category.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    editing ? 'Edit budget' : 'Tambah budget',
+                    style: theme.textTheme.headlineSmall,
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          TextField(
-            controller: _amountController,
-            keyboardType: TextInputType.number,
-            inputFormatters: const [RupiahInputFormatter()],
-            decoration: const InputDecoration(
-              labelText: 'Batas budget',
-              hintText: 'Rp500.000',
-              helperText: 'Masukkan batas pengeluaran bulan ini.',
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Tentukan batas pengeluaran untuk periode ini.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  DropdownButtonFormField<int?>(
+                    isExpanded: true,
+                    initialValue: _categoryId,
+                    decoration: const InputDecoration(
+                      labelText: 'Cakupan',
+                      helperText:
+                          'Pilih budget bulanan atau kategori tertentu.',
+                    ),
+                    onChanged: editing
+                        ? null
+                        : (value) {
+                            setState(() {
+                              _categoryId = value;
+                              _error = null;
+                            });
+                          },
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text(
+                          'Budget bulanan',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      for (final category in expenseCategories)
+                        DropdownMenuItem<int?>(
+                          value: category.id,
+                          child: Text(
+                            category.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  TextField(
+                    controller: _amountController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: const [RupiahInputFormatter()],
+                    decoration: InputDecoration(
+                      labelText: 'Batas budget',
+                      hintText: 'Rp500.000',
+                      helperText: 'Masukkan batas pengeluaran bulan ini.',
+                      errorText: _error,
+                    ),
+                    onChanged: (_) {
+                      if (_error != null) {
+                        setState(() => _error = null);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+                  AppFormActions(
+                    secondaryLabel: 'Batal',
+                    primaryLabel: 'Simpan',
+                    onSecondaryPressed: () => Navigator.pop(context),
+                    onPrimaryPressed: _submit,
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
-      actions: [
-        AppFormActions(
-          secondaryLabel: 'Batal',
-          primaryLabel: 'Simpan',
-          onSecondaryPressed: () => Navigator.pop(context),
-          onPrimaryPressed: () {
-            final amount = CurrencyFormatter.parseRupiah(
-              _amountController.text,
-            );
-            if (amount <= 0) return;
-            Navigator.pop(
-              context,
-              _BudgetFormResult(categoryId: _categoryId, limitAmount: amount),
-            );
-          },
         ),
-      ],
+      ),
+    );
+  }
+
+  void _submit() {
+    final amount = CurrencyFormatter.parseRupiah(_amountController.text);
+    if (amount <= 0) {
+      setState(() => _error = 'Masukkan nominal budget terlebih dahulu.');
+      return;
+    }
+    Navigator.pop(
+      context,
+      _BudgetFormResult(categoryId: _categoryId, limitAmount: amount),
     );
   }
 }

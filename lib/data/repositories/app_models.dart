@@ -36,6 +36,9 @@ class DashboardSummary {
     required this.budgetSpent,
     required this.recentTransactions,
     required this.topExpenseCategory,
+    this.budgetCount = 0,
+    this.hasMonthlyBudget = false,
+    this.categoryBudgetLimitTotal = 0,
   });
 
   final int totalBalance;
@@ -47,6 +50,11 @@ class DashboardSummary {
   final int budgetSpent;
   final List<TransactionDetail> recentTransactions;
   final String? topExpenseCategory;
+  final int budgetCount;
+  final bool hasMonthlyBudget;
+  final int categoryBudgetLimitTotal;
+
+  bool get hasBudget => budgetLimit > 0 || budgetCount > 0;
 
   double get budgetRatio {
     if (budgetLimit <= 0) {

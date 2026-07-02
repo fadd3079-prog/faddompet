@@ -13,6 +13,7 @@ import '../../data/repositories/app_models.dart';
 import '../../shared/components/balance_hero_card.dart';
 import '../../shared/components/insight_card.dart';
 import '../../shared/components/section_header.dart';
+import '../../shared/helpers/category_icon_mapper.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../transactions/widgets/transaction_tile.dart';
 
@@ -117,7 +118,9 @@ class DashboardPage extends ConsumerWidget {
     }
     if (summary.budgetLimit > 0) {
       final percent = (summary.budgetRatio * 100).round();
-      return 'Budget bulan ini sudah terpakai $percent%.';
+      return summary.hasMonthlyBudget
+          ? 'Budget bulan ini sudah terpakai $percent%.'
+          : 'Budget kategori sudah terpakai $percent%.';
     }
     if (summary.netCashflow >= 0) {
       return 'Pemasukan bulan ini lebih besar atau sama dengan pengeluaran.';
@@ -294,10 +297,10 @@ class _MonthlySnapshotCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 _MiniStatusRow(
                   label: 'Anggaran',
-                  value: summary.budgetLimit == 0
+                  value: !summary.hasBudget
                       ? 'Belum ada'
                       : '${(summary.budgetRatio * 100).round()}%',
-                  helper: 'Terpakai bulan ini',
+                  helper: _budgetHelper(summary, hideBalance),
                   accentColor: AppColors.warningOrange,
                 ),
               ],
@@ -307,6 +310,16 @@ class _MonthlySnapshotCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _budgetHelper(DashboardSummary summary, bool hideBalance) {
+  if (!summary.hasBudget) {
+    return 'Buat anggaran di Analitik';
+  }
+  if (!summary.hasMonthlyBudget) {
+    return 'Terpakai dari budget kategori';
+  }
+  return '${CurrencyFormatter.rupiah(summary.budgetSpent, hidden: hideBalance)} dari ${CurrencyFormatter.rupiah(summary.budgetLimit, hidden: hideBalance)}';
 }
 
 class _FlowAmount extends StatelessWidget {
@@ -507,12 +520,8 @@ IconData _transactionIcon(TransactionDetail detail) {
   if (detail.type == TransactionType.transfer) {
     return Icons.swap_horiz_rounded;
   }
-  final name = detail.category?.name.toLowerCase() ?? '';
-  if (name.contains('makan') || name.contains('minuman')) {
-    return Icons.restaurant_rounded;
-  }
-  if (name.contains('transport') || name.contains('bahan bakar')) {
-    return Icons.directions_car_rounded;
+  if (detail.category != null) {
+    return categoryIconForEntry(detail.category);
   }
   if (detail.type == TransactionType.income) {
     return Icons.work_rounded;

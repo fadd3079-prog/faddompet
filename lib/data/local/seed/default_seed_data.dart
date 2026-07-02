@@ -173,16 +173,153 @@ class DefaultSeedData {
   }
 
   static String _iconKey(String name) {
-    final lower = name.toLowerCase();
-    if (lower.contains('makan') || lower.contains('minuman')) return 'food';
-    if (lower.contains('transport') || lower.contains('bahan bakar')) {
-      return 'transport';
+    switch (name) {
+      case 'Makanan':
+        return 'food';
+      case 'Minuman':
+        return 'drink';
+      case 'Belanja Harian':
+        return 'daily-shopping';
+      case 'Transportasi':
+        return 'transport';
+      case 'Bahan Bakar':
+        return 'fuel';
+      case 'Parkir':
+        return 'parking';
+      case 'Pulsa & Internet':
+        return 'internet';
+      case 'Laundry':
+        return 'laundry';
+      case 'Kebutuhan Rumah':
+        return 'home-needs';
+      case 'Listrik':
+        return 'electricity';
+      case 'Air':
+        return 'water';
+      case 'WiFi':
+        return 'wifi';
+      case 'Sewa':
+        return 'rent';
+      case 'Cicilan':
+        return 'installment';
+      case 'Asuransi':
+        return 'insurance';
+      case 'Pajak':
+        return 'tax';
+      case 'Langganan Aplikasi':
+        return 'subscription';
+      case 'Software Kerja':
+        return 'work-software';
+      case 'Cloud Storage':
+        return 'cloud';
+      case 'Streaming':
+        return 'streaming';
+      case 'Design Tools':
+        return 'design-tools';
+      case 'Domain & Hosting':
+        return 'domain-hosting';
+      case 'Obat':
+        return 'medicine';
+      case 'Dokter':
+        return 'doctor';
+      case 'Rumah Sakit':
+        return 'hospital';
+      case 'Vitamin':
+        return 'vitamin';
+      case 'Perawatan Diri':
+        return 'self-care';
+      case 'Olahraga':
+        return 'sport';
+      case 'Buku':
+        return 'book';
+      case 'Kursus':
+        return 'course';
+      case 'Sertifikasi':
+        return 'certificate';
+      case 'Alat Tulis':
+        return 'stationery';
+      case 'Print':
+        return 'print';
+      case 'Peralatan Kerja':
+        return 'work-tools';
+      case 'Aplikasi Produktivitas':
+        return 'productivity';
+      case 'Hiburan':
+        return 'entertainment';
+      case 'Nongkrong':
+        return 'hangout';
+      case 'Bioskop':
+        return 'cinema';
+      case 'Game':
+        return 'game';
+      case 'Liburan':
+        return 'vacation';
+      case 'Hobi':
+        return 'hobby';
+      case 'Fashion':
+        return 'fashion';
+      case 'Hadiah':
+        return 'gift';
+      case 'Tabungan':
+        return 'savings';
+      case 'Investasi':
+        return 'investment';
+      case 'Dana Darurat':
+        return 'emergency-fund';
+      case 'Transfer Keluar':
+        return 'transfer-out';
+      case 'Biaya Admin':
+        return 'admin-fee';
+      case 'Donasi':
+        return 'donation';
+      case 'Hutang Dibayar':
+        return 'debt-paid';
+      case 'Gaji':
+        return 'salary';
+      case 'Upah':
+        return 'wage';
+      case 'Bonus':
+        return 'bonus';
+      case 'Komisi':
+        return 'commission';
+      case 'Tunjangan':
+        return 'allowance';
+      case 'Lembur':
+        return 'overtime';
+      case 'Penjualan':
+        return 'sales';
+      case 'Jasa':
+        return 'service';
+      case 'Project':
+        return 'project';
+      case 'Freelance':
+        return 'freelance';
+      case 'Konsultasi':
+        return 'consulting';
+      case 'Royalti':
+        return 'royalty';
+      case 'Affiliate':
+        return 'affiliate';
+      case 'Cashback':
+        return 'cashback';
+      case 'Refund':
+        return 'refund';
+      case 'Bunga':
+        return 'interest';
+      case 'Dividen':
+        return 'dividend';
+      case 'Investasi Cair':
+        return 'investment-liquid';
+      case 'Tabungan Dicairkan':
+        return 'savings-withdrawal';
+      case 'Uang Saku':
+        return 'pocket-money';
+      case 'Bantuan':
+        return 'aid';
+      case 'Pinjaman Masuk':
+        return 'loan-in';
+      default:
+        return 'category';
     }
-    if (lower.contains('gaji') || lower.contains('upah')) return 'income';
-    if (lower.contains('tagihan') || lower.contains('listrik')) return 'bill';
-    if (lower.contains('tabungan') || lower.contains('investasi')) {
-      return 'savings';
-    }
-    return 'category';
   }
 }

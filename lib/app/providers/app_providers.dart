@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../core/enums/analytics_period.dart';
 import '../../data/local/database/app_database.dart';
 import '../../data/repositories/analytics_repository.dart';
 import '../../data/repositories/app_models.dart';
@@ -26,6 +28,10 @@ final bootstrapRepositoryProvider = Provider<BootstrapRepository>((ref) {
 
 final appBootstrapProvider = FutureProvider<void>((ref) async {
   await ref.watch(bootstrapRepositoryProvider).ensureSeeded();
+});
+
+final packageInfoProvider = FutureProvider<PackageInfo>((ref) {
+  return PackageInfo.fromPlatform();
 });
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
@@ -82,8 +88,25 @@ final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
   return AnalyticsRepository(ref.watch(databaseProvider));
 });
 
+final analyticsPeriodProvider =
+    NotifierProvider<AnalyticsPeriodController, AnalyticsPeriod>(
+      AnalyticsPeriodController.new,
+    );
+
+class AnalyticsPeriodController extends Notifier<AnalyticsPeriod> {
+  @override
+  AnalyticsPeriod build() {
+    return AnalyticsPeriod.currentMonth;
+  }
+
+  void setPeriod(AnalyticsPeriod period) {
+    state = period;
+  }
+}
+
 final analyticsSummaryProvider = StreamProvider<AnalyticsSummary>((ref) {
-  return ref.watch(analyticsRepositoryProvider).watchSummary();
+  final period = ref.watch(analyticsPeriodProvider);
+  return ref.watch(analyticsRepositoryProvider).watchSummary(period);
 });
 
 final backupRepositoryProvider = Provider<BackupRepository>((ref) {

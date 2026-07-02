@@ -11,6 +11,7 @@ import '../../core/formatters/currency_formatter.dart';
 import '../../core/formatters/date_formatter.dart';
 import '../../data/repositories/app_models.dart';
 import '../../shared/components/add_transaction_sheet.dart';
+import '../../shared/helpers/category_icon_mapper.dart';
 import '../../shared/widgets/app_confirm_dialog.dart';
 import '../../shared/widgets/app_form_actions.dart';
 import '../../shared/widgets/empty_state.dart';
@@ -425,12 +426,8 @@ IconData _transactionIcon(TransactionDetail detail) {
   if (detail.type == TransactionType.transfer) {
     return Icons.swap_horiz_rounded;
   }
-  final name = detail.category?.name.toLowerCase() ?? '';
-  if (name.contains('makan') || name.contains('minuman')) {
-    return Icons.restaurant_rounded;
-  }
-  if (name.contains('transport') || name.contains('bahan bakar')) {
-    return Icons.directions_car_rounded;
+  if (detail.category != null) {
+    return categoryIconForEntry(detail.category);
   }
   if (detail.type == TransactionType.income) {
     return Icons.work_rounded;

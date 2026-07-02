@@ -10,14 +10,15 @@ import '../../app/theme/app_radius.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../core/enums/category_type.dart';
 import '../../data/local/database/app_database.dart';
-import '../analytics/analytics_page.dart';
-import 'widgets/app_update_sheet.dart';
+import '../../shared/helpers/category_icon_mapper.dart';
 import '../../shared/widgets/app_brand_mark.dart';
 import '../../shared/widgets/app_confirm_dialog.dart';
 import '../../shared/widgets/app_form_actions.dart';
 import '../../shared/widgets/app_icon_action_button.dart';
 import '../../shared/widgets/pressable_surface.dart';
 import '../../shared/widgets/top_toast.dart';
+import '../analytics/analytics_page.dart';
+import 'widgets/app_update_sheet.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -30,6 +31,17 @@ class SettingsPage extends ConsumerWidget {
     final security = ref
         .watch(securitySettingsProvider)
         .maybeWhen(data: (value) => value, orElse: () => null);
+    final packageInfo = ref.watch(packageInfoProvider);
+    final versionLabel = packageInfo.when(
+      data: (info) => 'Versi ${info.version}',
+      loading: () => 'Memuat versi...',
+      error: (_, _) => 'Versi aplikasi belum bisa dimuat',
+    );
+    final aboutSubtitle = packageInfo.when(
+      data: (info) => 'Versi ${info.version}, offline tanpa akun',
+      loading: () => 'Memuat versi...',
+      error: (_, _) => 'Versi aplikasi belum bisa dimuat',
+    );
     final theme = Theme.of(context);
 
     return SafeArea(
@@ -115,9 +127,9 @@ class SettingsPage extends ConsumerWidget {
             onTap: () => _confirmReset(context, ref),
           ),
           _SettingsTile(
-            icon: Icons.favorite_border_rounded,
+            icon: Icons.volunteer_activism_rounded,
             title: 'Dukung Pengembangan',
-            subtitle: 'Bantu pengembangan FadDompet tetap berjalan.',
+            subtitle: 'Dukungan opsional untuk pengembangan FadDompet.',
             onTap: () => _confirmExternalLink(
               context,
               url: 'https://tako.id/fadhol_pemula',
@@ -126,7 +138,7 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           _SettingsTile(
-            icon: Icons.code_rounded,
+            icon: Icons.integration_instructions_rounded,
             title: 'Repositori GitHub',
             subtitle: 'Lihat kode sumber dan perkembangan proyek.',
             onTap: () => _confirmExternalLink(
@@ -136,7 +148,7 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           _SettingsTile(
-            icon: Icons.system_update_rounded,
+            icon: Icons.system_update_alt_rounded,
             title: 'Pembaruan Aplikasi',
             subtitle: 'Periksa dan unduh versi terbaru FadDompet.',
             onTap: () => _showUpdateSheet(context),
@@ -144,8 +156,8 @@ class SettingsPage extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.info_rounded,
             title: 'Tentang FadDompet',
-            subtitle: 'Versi 1.2.0, offline tanpa akun',
-            onTap: () => _showAboutSheet(context),
+            subtitle: aboutSubtitle,
+            onTap: () => _showAboutSheet(context, versionLabel),
           ),
         ],
       ),
@@ -578,7 +590,7 @@ class SettingsPage extends ConsumerWidget {
     }
   }
 
-  void _showAboutSheet(BuildContext context) {
+  void _showAboutSheet(BuildContext context, String versionLabel) {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -622,7 +634,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                 ),
                 child: Text(
-                  'Versi 1.2.0\nData tersimpan lokal di perangkat. Tidak perlu akun atau koneksi cloud.',
+                  '$versionLabel\nData tersimpan lokal di perangkat. Tidak perlu akun atau koneksi cloud.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
@@ -1305,7 +1317,7 @@ class _CategoryTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(
-                  Icons.category_rounded,
+                  categoryIconForEntry(category),
                   color: Color(category.colorValue),
                   size: 20,
                 ),

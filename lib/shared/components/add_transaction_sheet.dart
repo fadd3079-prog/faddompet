@@ -13,6 +13,7 @@ import '../../core/formatters/currency_formatter.dart';
 import '../../core/formatters/date_formatter.dart';
 import '../../data/local/database/app_database.dart';
 import '../../data/repositories/app_models.dart';
+import '../helpers/category_icon_mapper.dart';
 import '../widgets/top_toast.dart';
 import '../widgets/pressable_surface.dart';
 import 'amount_display.dart';
@@ -629,7 +630,7 @@ class _CategoryPicker extends StatelessWidget {
               for (final item in frequent)
                 CategoryChoiceChip(
                   label: item.name,
-                  icon: _categoryIcon(item.iconKey),
+                  icon: categoryIconForEntry(item),
                   selected: selectedCategoryId == item.id,
                   accentColor: fallbackAccent,
                   onSelected: () => onSelected(item),
@@ -644,7 +645,7 @@ class _CategoryPicker extends StatelessWidget {
               for (final item in entry.value)
                 CategoryChoiceChip(
                   label: item.name,
-                  icon: _categoryIcon(item.iconKey),
+                  icon: categoryIconForEntry(item),
                   selected: selectedCategoryId == item.id,
                   accentColor: Color(item.colorValue),
                   onSelected: () => onSelected(item),
@@ -1032,23 +1033,6 @@ List<String> _frequentLabels(TransactionType type) {
       return ['Gaji', 'Jasa', 'Project', 'Uang Saku', 'Cashback', 'Lainnya'];
     case TransactionType.transfer:
       return const [];
-  }
-}
-
-IconData _categoryIcon(String key) {
-  switch (key) {
-    case 'food':
-      return Icons.restaurant_rounded;
-    case 'transport':
-      return Icons.directions_car_rounded;
-    case 'income':
-      return Icons.work_rounded;
-    case 'bill':
-      return Icons.receipt_long_rounded;
-    case 'savings':
-      return Icons.savings_rounded;
-    default:
-      return Icons.category_rounded;
   }
 }
 
