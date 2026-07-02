@@ -57,6 +57,16 @@ test: cover version comparison
 - Avoid heavy blur, excessive shadows, and expensive animations.
 - Use simple, beginner-friendly wording in the app.
 
+## AI-Assisted Contributions
+
+AI-assisted pull requests are welcome when they are reviewed, scoped, and tested. Contributors are responsible for everything they submit.
+
+- Do not submit unreviewed AI output.
+- Mention AI assistance in the pull request if it materially affected the change.
+- Do not use AI output to add secrets, tracking, unnecessary permissions, or undocumented behavior.
+- Follow [AGENTS.md](AGENTS.md) and [docs/ai-assisted-development.md](docs/ai-assisted-development.md).
+- Run the required checks before opening a pull request.
+
 ## Before Opening a Pull Request
 
 Run:

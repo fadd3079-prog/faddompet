@@ -136,6 +136,17 @@ android       Android host project
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## AI-Assisted Development
+
+FadDompet includes repository-level instructions for AI-assisted development. AI-generated changes must follow the same standards as human contributions: small scope, no secrets, no unnecessary permissions, and passing checks.
+
+- [AGENTS.md](AGENTS.md)
+- [AI-assisted development guide](docs/ai-assisted-development.md)
+
+## Automated Checks
+
+The repository uses GitHub Actions for Flutter analyze/test checks, Dependabot for dependency updates, and CodeQL for scheduled Android host-code scanning.
+
 ## Security
 
 See [SECURITY.md](SECURITY.md).
