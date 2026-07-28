@@ -5,8 +5,8 @@ allprojects {
     }
     configurations.configureEach {
         resolutionStrategy.force(
-            "androidx.core:core:1.18.0",
-            "androidx.core:core-ktx:1.18.0",
+            "androidx.core:core:1.19.0",
+            "androidx.core:core-ktx:1.19.0",
         )
     }
 }
